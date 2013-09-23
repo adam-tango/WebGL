@@ -1,0 +1,33 @@
+<html>
+<head>
+	<title>Voxel Rain</title>
+	<!-- Script Goes Here -->
+	<meta charset="utf-8"/>
+	<script type="text/javascript" src="js/TemplateSetup.js"></script>
+	<script type="text/javascript" src="js/shaders.js"></script>
+	<script type="text/javascript" src="js/Voxel_Rain.js"></script>
+	<script type="text/javascript" src="js/shapes/cube.js"></script>
+	<script type="text/javascript" src="js/shapes/skull.js"></script>
+	<script type="text/javascript" src="js/shapes/teapot.js"></script>
+	<script type="text/javascript" src="js/lib/cuon-matrix.js"></script>
+	<!--<script type="text/javascript" src="js/lib/cuon-utils.js"></script>-->
+	<script type="text/javascript" src="js/lib/webgl-debug.js"></script>
+	<script type="text/javascript" src="js/lib/webgl-utils.js"></script>
+</head>
+<body onload="start();">
+	<div style="text-align:center;">
+		<h2>Voxel Rain</h2>
+		<h4>The model picker and render mode selector actually work!</h4>
+		<canvas id="mainCanvas" width="640" height="480"></canvas>
+		<textarea id="messageArea" rows="10" cols="49"></textarea>
+		<button type="button" id="messageClear">clear message</button><br/>
+		<select id="menu" onchange="menuHandler();"></select><br/>
+		<input type="checkbox" value="diffuse" onclick="toggleLightingFlag(this);">Diffuse
+		<input type="checkbox" value="specular" onclick="toggleLightingFlag(this);">Specular<br/>
+		<input type="radio" name="renderingMode" value="wireframe" onchange="setRenderMode(this);">wireframe
+		<input type="radio" checked="checked" name="renderingMode" value="solid" onchange="setRenderMode(this);">solid<br/>
+		<input type="file" onchange="loadFile(this.files);">
+		<p id="output"/>
+	</div>
+</body>
+</html>
