@@ -51,7 +51,14 @@ function drawSelectedObject(clear)
   addMessage(((model)?'Model created successfully...probably':'Model creation failed!'))
   console.debug(model);
 
-  var N = [4,4,4];
+  /* 
+	Height   (ex: 16 = 16 cubes high)
+	Width
+	Depth
+  */
+  
+  var N = [8,4,4];
+  var numObjects = N[0]*N[1]*N[2];
 
   var modelBounds = model.getBounds();
   console.log(modelBounds);
@@ -78,36 +85,64 @@ function drawSelectedObject(clear)
     modelBounds.min[1]+N[1]*delta,
     modelBounds.min[2]+N[2]*delta
   ];
+  
+ 
 
   var camera = new Camera(sceneBounds,[0,1,0]);
   console.log(camera);
   var projMatrix = camera.getProjMatrix();
+
+  /* Create the array that randomly assigns a starting height for the objects.
+	 The value will be a number between 20 and 190.
+	 The objects will not fall through each other.
+  */
+  var t = 0;
+  var temp = 0;
+  var rain = new Array(numObjects);
+  
+  for (var z=0; z<N[1]*N[2]; z++)
+    {
+		for (var y=1; y<N[0]+1; y++)
+		{
+			rain[t] = 20 + (Math.floor(Math.random()*75));
+			if (temp >= rain[t]){
+				rain[t] = rain[t] + temp;
+			}
+
+			temp = rain[t];
+			t++;
+		}
+		temp = 0;
+	}
 
 
   /**
    * This is where the magic happens!
    * Uncomment the modelMatrix.rotate line to cause the items to rotate
    */
+
   function draw()
   {
+	var t = 0
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.clear(gl.DEPTH_BUFFER_BIT);
     var viewMatrix = camera.getRotatedViewMatrix(angle);
-
     var modelMatrix = new Matrix4();
 
     for (var z=0; z<N[2]; z++)
-    {
+    {	
       for (var y=0; y<N[1]; y++)
       {
         for (var x=0; x<N[0]; x++)
         {
-          modelMatrix.setTranslate(x*delta*1.5, y*delta*1.5, z*delta*1.5);
-          //modelMatrix.translate(center[0],center[1],center[2]);
+			// Swapped x and y. Needed this to make sure the objects fell vertically.
+		  modelMatrix.setTranslate(y*delta, x*delta, z*delta);
+          modelMatrix.translate(center[0], rain[t], center[2]);
           //modelMatrix.rotate(angle*(x+y+z),0,1,1)
           //modelMatrix.translate(-center[0],-center[1],-center[2]);
           model.draw(projMatrix, viewMatrix, modelMatrix);
+		  t++;
         }
       }
     }
@@ -119,8 +154,23 @@ function drawSelectedObject(clear)
     {
       angle -= 360;
     }
+	/*
+		Translate the objects. They drop slower once they get below 0.1. 
+		This was done to make sure they would appear to be sitting flush to one another.
+		Otherwise there would be visible gaps.
+		This is caused by the delta value being a float value.
+	*/
+	for(var i = 0; i < numObjects; i++){
+		if((rain[i]-0.1) > 0){
+			rain[i] -= 0.1;
+		}
+		else if (rain[i] > 0 && (rain[i]-0.001 > 0)){
+			rain[i] -= 0.001;
+		}
+	}
+	
     window.requestAnimationFrame(draw);
-  }
+	}
 
   draw();
 }
