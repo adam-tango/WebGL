@@ -1,6 +1,8 @@
 var gl;
 var program;
 
+var scale = 1;
+
 var perspectiveMatrix;
 var myMatrix;
 var MatrixStack = [];
@@ -28,6 +30,22 @@ function start()
 function clearCanvas()
 {
   initGL(canvas);
+}
+
+/*
+	Scales the translations for the different models so they rain correctly.
+*/
+function setScale(toRender){
+  addMessage(toRender);
+  if(toRender == 'cube'){
+	scale = 1;
+  }
+  else if(toRender == 'teapot'){
+	scale = 40;
+  }
+  else{
+	scale = 250;
+  }
 }
 
 function drawSelectedObject(clear)
@@ -104,7 +122,7 @@ function drawSelectedObject(clear)
     {
 		for (var y=1; y<N[0]+1; y++)
 		{
-			rain[t] = 20 + (Math.floor(Math.random()*75));
+			rain[t] = 20*scale + (Math.floor(Math.random()*75*scale));
 			if (temp >= rain[t]){
 				rain[t] = rain[t] + temp;
 			}
@@ -162,10 +180,10 @@ function drawSelectedObject(clear)
 	*/
 	for(var i = 0; i < numObjects; i++){
 		if((rain[i]-0.1) > 0){
-			rain[i] -= 0.1;
+			rain[i] -= 0.1*scale;
 		}
 		else if (rain[i] > 0 && (rain[i]-0.001 > 0)){
-			rain[i] -= 0.001;
+			rain[i] -= 0.001*scale;
 		}
 	}
 	

@@ -30,6 +30,8 @@ function menuHandler()
 		options.model = skullObject;
 	}
 
+	// Calls the scale function to identify the model.
+	setScale(toRender);
 	drawSelectedObject();
 }
 
