@@ -1,6 +1,8 @@
 var gl;
 var program;
 
+var scale = 1;
+
 var perspectiveMatrix;
 var myMatrix;
 var MatrixStack = [];
@@ -28,6 +30,26 @@ function start()
 function clearCanvas()
 {
   initGL(canvas);
+}
+
+/*
+  Scales the translations for the different models so they rain correctly.
+*/
+function setScale(toRender)
+{
+  addMessage(toRender);
+  if(toRender == 'cube')
+  {
+    scale = 1;
+  }
+  else if(toRender == 'teapot')
+  {
+    scale = 40;
+  }
+  else
+  {
+    scale = 250;
+  }
 }
 
 function drawSelectedObject(clear)
@@ -104,7 +126,7 @@ function drawSelectedObject(clear)
     {
 		for (var y=1; y<N[0]+1; y++)
 		{
-			rain[t] = 20 + (Math.floor(Math.random()*75));
+			rain[t] = 20*scale + (Math.floor(Math.random()*75*scale));
 			if (temp >= rain[t]){
 				rain[t] = rain[t] + temp;
 			}
@@ -123,7 +145,7 @@ function drawSelectedObject(clear)
 
   function draw()
   {
-	var t = 0
+	  var t = 0
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.clear(gl.DEPTH_BUFFER_BIT);
@@ -136,13 +158,13 @@ function drawSelectedObject(clear)
       {
         for (var x=0; x<N[0]; x++)
         {
-			// Swapped x and y. Needed this to make sure the objects fell vertically.
-		  modelMatrix.setTranslate(y*delta, x*delta, z*delta);
+			    // Swapped x and y. Needed this to make sure the objects fell vertically.
+		      modelMatrix.setTranslate(y*delta, x*delta, z*delta);
           modelMatrix.translate(center[0], rain[t], center[2]);
           //modelMatrix.rotate(angle*(x+y+z),0,1,1)
           //modelMatrix.translate(-center[0],-center[1],-center[2]);
           model.draw(projMatrix, viewMatrix, modelMatrix);
-		  t++;
+		      t++;
         }
       }
     }
@@ -154,20 +176,23 @@ function drawSelectedObject(clear)
     {
       angle -= 360;
     }
-	/*
-		Translate the objects. They drop slower once they get below 0.1. 
-		This was done to make sure they would appear to be sitting flush to one another.
-		Otherwise there would be visible gaps.
-		This is caused by the delta value being a float value.
-	*/
-	for(var i = 0; i < numObjects; i++){
-		if((rain[i]-0.1) > 0){
-			rain[i] -= 0.1;
-		}
-		else if (rain[i] > 0 && (rain[i]-0.001 > 0)){
-			rain[i] -= 0.001;
-		}
-	}
+  	/*
+  		Translate the objects. They drop slower once they get below 0.1. 
+  		This was done to make sure they would appear to be sitting flush to one another.
+  		Otherwise there would be visible gaps.
+  		This is caused by the delta value being a float value.
+  	*/
+  	for(var i = 0; i < numObjects; i++)
+    {
+  		if((rain[i]-0.1) > 0)
+      {
+  			rain[i] -= 0.1 * scale;
+  		}
+  		else if (rain[i] > 0 && (rain[i]-0.001 > 0))
+      {
+  			rain[i] -= 0.001 * scale;
+  		}
+  	}
 	
     window.requestAnimationFrame(draw);
 	}
