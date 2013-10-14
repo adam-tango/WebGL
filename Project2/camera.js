@@ -25,6 +25,9 @@ function Camera(gl,d,modelUp) // Compute a camera from model's bounding box dime
 	this.getCameraPosition=function(){
 		return [eye[0], eye[1], eye[2]];
 	};
+	this.getLookAtPoint = function() {
+		return [at[0], at[1], at[2]];
+	}
 	
 	/*
 		ROTATIONS AND SHIFTS ASSUME UP VECTOR IS POSITIVE Y AXIS

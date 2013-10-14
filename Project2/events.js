@@ -78,6 +78,10 @@ $(document).bind('keypress', function(e)
 	event_queue = 1; 
 });
 
+function setLight() {
+	event_queue = 1;
+}
+
 // Returns TRUE when an event has occured but not yet updated in draw
 function consumeEvent() {
 		event_queue--;

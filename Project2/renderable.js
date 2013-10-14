@@ -1,5 +1,5 @@
 "use strict";
-function RenderableModel(gl,model){
+function RenderableModel(gl,model) {	
 	function Drawable(attribLocations, vArrays, nVertices, indexArray, drawMode){
 	  // Create a buffer object
 	  var vertexBuffers=[];
@@ -56,56 +56,6 @@ function RenderableModel(gl,model){
 		}
 	  }
 	}
-	
-	// Vertex shader program
-	var VSHADER_SOURCE =
-	  // 'attribute vec2 textureCoord;\n' +	
-	  'attribute vec3 position;\n' +
-	  'attribute vec3 normal;\n' +
-	  'uniform mat4 modelT, viewT, projT;\n'+
-	  'uniform mat4 normalMatrix;\n' +   // Transformation matrix of the normal
-  	  'varying vec4 v_Color;\n' +
-      'varying vec3 v_Normal;\n' +
-      'varying vec3 v_Position;\n' +
-	  // 'varying highp vec2 vTextureCoord;\n' +
-	  'void main() {\n' +
-	  '  gl_Position = projT*viewT*modelT*vec4(position,1.0);\n' +
-         // Calculate the vertex position in the world coordinate
-  	  '  v_Position = vec3(normalMatrix * vec4(position, 1.0));\n' +
-      '  v_Normal = normalize(vec3(normalMatrix * vec4(normal, 1.0)));\n' +
-	  '  v_Color = vec4(0, 1.0, 0.0, 1.0);\n' +   // use instead of textures for now
-	  // 'vTextureCoord = textureCoord;\n' +
-	  '}\n';
-
-
-	// Fragment shader program
-	var FSHADER_SOURCE =
-  	  '#ifdef GL_ES\n' +
-  	  'precision highp float;\n' +
-      '#endif\n' +
-      
-	  // 'uniform sampler2D uSampler;\n' +
-	  'uniform vec3 u_LightColor;\n' +     // Light color
-      'uniform vec3 u_LightPosition;\n' +  // Position of the light source
-      'uniform vec3 u_AmbientLight;\n' +   // Ambient light color
-  	  'varying vec3 v_Normal;\n' +
-  	  'varying vec3 v_Position;\n' +
-	  'varying vec4 v_Color;\n' + // use instead of texture
-	  // 'varying highp vec2 vTextureCoord;\n' +
-      'void main() {\n' +  
-	  // 'vec4 v_Color = vec4(texture2D(uSampler, vTextureCoord).rgb, 1.0);\n'+
-         // Normalize the normal because it is interpolated and not 1.0 in length any more
-      '  vec3 normal = normalize(v_Normal);\n' +
-         // Calculate the light direction and make its length 1.
-      '  vec3 lightDirection = normalize(u_LightPosition - v_Position);\n' +
-         // The dot product of the light direction and the orientation of a surface (the normal)
-      '  float nDotL = max(dot(lightDirection, normal), 0.0);\n' +
-         // Calculate the final color from diffuse reflection and ambient reflection
-      '  vec3 diffuse = u_LightColor * v_Color.rgb * nDotL;\n' +
-      '  vec3 ambient = u_AmbientLight * v_Color.rgb;\n' +
-      '  gl_FragColor = vec4(diffuse + ambient, v_Color.a);\n' +
-      '}\n';
-
 
 	// create program
 	var program = createProgram(gl, VSHADER_SOURCE, FSHADER_SOURCE);
@@ -114,23 +64,20 @@ function RenderableModel(gl,model){
 		return false;
 	}
 
-	var a_Position = gl.getAttribLocation(program, 'position');		  
-	var a_Normal = gl.getAttribLocation(program, 'normal'); // for lighting
-	var a_Locations = [a_Position,a_Normal];
-	// var a_TextureCoordAttribute = gl.getAttribLocation(program, "textureCoord"); // for texture
-	// var a_Locations = [a_Position,a_Normal,a_TextureCoordAttribute];
+	// Attributes
+	var aPositionLoc = gl.getAttribLocation(program, 'aPosition');		  
+	var aNormalLoc = gl.getAttribLocation(program, 'aNormal'); // for lighting
+	var a_Locations = [aPositionLoc,aNormalLoc];
 
-	// Get the location/address of the uniform variable inside the shader program.
+	// Uniforms
 	var mmLoc = gl.getUniformLocation(program,"modelT");
 	var vmLoc = gl.getUniformLocation(program,"viewT");
 	var pmLoc = gl.getUniformLocation(program,"projT");
-	// Needed for lighting
+	// Lighting
 	var nmLoc = gl.getUniformLocation(program,"normalMatrix");
-	var u_LightColor = gl.getUniformLocation(program, 'u_LightColor');
-  	var u_LightPosition = gl.getUniformLocation(program, 'u_LightPosition');
-  	var u_AmbientLight = gl.getUniformLocation(program, 'u_AmbientLight');
-	// textures
-	// var texLoc = gl.getUniformLocation(program,"uSampler");
+  	var uEyePositionLoc = gl.getUniformLocation(program, 'uEyePosition');
+	var uSceneCenterLoc = gl.getUniformLocation(program, 'uSceneCenter');
+	var uLightTypeLoc = gl.getUniformLocation(program, 'uLightType');
 	
 	var drawables=[];
 	var modelTransformations=[];
@@ -158,21 +105,15 @@ function RenderableModel(gl,model){
 		}
 	}
 	// Get the location/address of the vertex attribute inside the shader program.
-	this.draw = function (cameraPosition,pMatrix,vMatrix,mMatrix)
+	this.draw = function (lType,eyePosition,sceneCenter,pMatrix,vMatrix,mMatrix)
 	{
 		gl.useProgram(program);
 		gl.uniformMatrix4fv(pmLoc, false, pMatrix.elements);
 		gl.uniformMatrix4fv(vmLoc, false, vMatrix.elements);
-		// Set the light color (white)
-  		gl.uniform3f(u_LightColor, 1.0, 1.0, 1.0);
-  		// Set the light location (in the world coordinate)
- 		gl.uniform3f(u_LightPosition, cameraPosition[0], cameraPosition[1], cameraPosition[2]);
-  		// Set the ambient light
-  		gl.uniform3f(u_AmbientLight, 0.1, 0.1, 0.1);
+ 		gl.uniform3f(uEyePositionLoc, eyePosition[0], eyePosition[1], eyePosition[2]);
+		gl.uniform3f(uEyePositionLoc, sceneCenter[0], sceneCenter[1], sceneCenter[2]);
+		gl.uniform1f(uLightTypeLoc, lType);
 
-		// Texture
-		//gl.uniform1i(texLoc,0); // 0 identifies TEXTURE0 
-		
 		// pass variables determined at runtime
 		for (var i= 0; i<nDrawables; i++){
 			// pass model matrix
@@ -184,10 +125,7 @@ function RenderableModel(gl,model){
   			normalMatrix.transpose();
 			// Pass the transformation matrix for normals to u_NormalMatrix
   			gl.uniformMatrix4fv(nmLoc, false, normalMatrix.elements);					
-			//gl.uniformMatrix4fv(mmLoc, false, 
-				//(mMatrix)?(new Matrix4(mMatrix).multiply(modelTransformations[i])).elements
-					//	:modelTransformations[i].elements);
-						
+									
 			drawables[i].draw();
 		}
 		gl.useProgram(null);
@@ -261,3 +199,80 @@ function RenderableWireBoxModel(gl,d){
 		wireModel.draw(mP,mV,new Matrix4(mM).multiply(transformation));
 	}
 }
+
+
+// OBSOLETE SHADER CODE
+/**
+	// Vertex shader program
+	var VSHADER_SOURCE =
+	  // 'attribute vec2 textureCoord;\n' +	
+	  'attribute vec3 position;\n' +
+	  'attribute vec3 normal;\n' +
+	  'uniform mat4 modelT, viewT, projT;\n'+
+	  'uniform mat4 normalMatrix;\n' +   // Transformation matrix of the normal
+  	  'varying vec4 v_Color;\n' +
+      'varying vec3 v_Normal;\n' +
+      'varying vec3 v_Position;\n' +
+	  // 'varying highp vec2 vTextureCoord;\n' +
+	  'void main() {\n' +
+	  '  gl_Position = projT*viewT*modelT*vec4(position,1.0);\n' +
+         // Calculate the vertex position in the world coordinate
+  	  '  v_Position = vec3(normalMatrix * vec4(position, 1.0));\n' +
+      '  v_Normal = normalize(vec3(normalMatrix * vec4(normal, 1.0)));\n' +
+	  '  v_Color = vec4(0, 1.0, 0.0, 1.0);\n' +   // use instead of textures for now
+	  // 'vTextureCoord = textureCoord;\n' +
+	  '}\n';
+
+
+	// Fragment shader program
+	var FSHADER_SOURCE =
+  	  '#ifdef GL_ES\n' +
+  	  'precision highp float;\n' +
+      '#endif\n' +
+      
+	  // 'uniform sampler2D uSampler;\n' +
+	  'uniform vec3 u_LightColor;\n' +     // Light color
+      'uniform vec3 u_LightPosition;\n' +  // Position of the light source
+      'uniform vec3 u_AmbientLight;\n' +   // Ambient light color
+	  
+	  'uniform vec3  spotDirectionOC;\n' +  // in object coordinates
+	  'uniform float spotCutoff;\n' +       // in degrees
+
+	  // light source type
+	  'uniform float lightType;\n' +
+	  
+  	  'varying vec3 v_Normal;\n' +
+  	  'varying vec3 v_Position;\n' +
+	  'varying vec4 v_Color;\n' + // use instead of texture
+	  // 'varying highp vec2 vTextureCoord;\n' +
+      'void main() {\n' +  
+	  '  vec3 spotDirection;\n' +
+      '  float angle;\n' +
+
+	  // 'vec4 v_Color = vec4(texture2D(uSampler, vTextureCoord).rgb, 1.0);\n'+
+         // Normalize the normal because it is interpolated and not 1.0 in length any more
+      '  vec3 normal = normalize(v_Normal);\n' +
+         // Calculate the light direction and make its length 1.
+      '  vec3 lightDirection = normalize(u_LightPosition - v_Position);\n' +
+         // The dot product of the light direction and the orientation of a surface (the normal)
+      '  float nDotL = max(dot(lightDirection, normal), 0.0);\n' +
+         // Calculate the final color from diffuse reflection and ambient reflection
+      '  vec3 diffuse = u_LightColor * v_Color.rgb * nDotL;\n' +
+      '  vec3 ambient = u_AmbientLight * v_Color.rgb;\n' +
+      '  gl_FragColor = vec4(diffuse + ambient, v_Color.a);\n' +
+	  '  if(lightType == 0.0) {\n' +
+	  '     spotDirection  = normalize(spotDirectionOC * normal);\n' +
+	  
+	       // Calculates the angle between the spot light direction vector and the light vector
+      '  	angle = dot( normalize(spotDirection), -normalize(lightDirection));\n' +
+      ' 	angle = max(angle,0.0);\n' +
+	  		// Test whether vertex is located in the cone
+  	  '     if(acos(angle) < radians(spotCutoff))\n' +
+      '        gl_FragColor = vec4(1,1,0,1);\n' + // lit (yellow)
+   	  '     else\n' +
+      '        gl_FragColor = vec4(0,0,0,1);\n' + // unlit(black) 
+	  
+//	  '     gl_FragColor = gl_Color;\n' +	  
+	  '  }\n' +
+      '}\n';
+**/
