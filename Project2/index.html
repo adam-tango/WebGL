@@ -12,7 +12,6 @@
 <script src="renderable.js"></script>
 <script src="camera.js"></script>
 <script src="events.js"></script>
-<script src="shaders.js"></script>
 <script type="text/javascript">
 	//This function gets called when reading a JSON file. It stores the current xml information.
 	function parseJSON(jsonFile)
@@ -35,18 +34,6 @@
 		projMatrix = camera.getProjMatrix();
 	}
 	
-	// Switch between light sources
-	var lType;
-	function loadLight(lightType) {
-		if(lightType == "omni") {
-			lType = 1.0;
-		}
-		else {
-			lType = 0.0;
-		}
-		setLight(); // tell event handler to set consume new light source
-	}
-	
 	// onload: main()
 	function start() {
 		var canvas = null;
@@ -58,9 +45,6 @@
 		var modelList = document.getElementById("modelList")
 		loadModel(modelList.options[modelList.selectedIndex].value);
 	
-		// default light is first one in dropdown
-		var lightList = document.getElementById("lightList")
-		loadLight(lightList.options[lightList.selectedIndex].value);
 	
 		// update drawing as fast as possible
 		function draw(){
@@ -71,7 +55,7 @@
 				var viewMatrix = camera.getViewMatrix();
 				var projMatrix = camera.getProjMatrix();
 				var cameraEye = camera.getCameraPosition();
-				model.draw(lType,cameraEye,camera.getLookAtPoint(),projMatrix, viewMatrix);	
+				model.draw(cameraEye,projMatrix, viewMatrix);	
 			}
 			
 			window.requestAnimationFrame(draw);
@@ -91,11 +75,6 @@
   		<option value='House/models/model.json'>House</option>
   		<option value='House_of_parliament/models/model.json'>House of Parliament</option>
   		<option value='Shrine/models/model.json'>Shrine</option>
- 	</select>
-    <select id="lightList" onchange="loadLight(this.value);">
-  		<!-- <option value='DijonPalais/models/model.json'>Dijon Palais</option> -->
-  		<option value='omni'>Omni Light</option>
-  		<option value='spot'>Spot Light</option>
  	</select>
     <br />
 	<canvas id="scene" width="600px" height="400px" style="border:1px solid #FF0000;"></canvas>
