@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Project 2</title>
+<script src="webgl-utils.js"></script>
+<script src="webgl-debug.js"></script>
+<script src="cuon-utils.js"></script>
+<script src="cuon-matrix.js"></script>
+<script src="renderable.js"></script>
+<script src="camera.js"></script>
+<script src="events.js"></script>
+<script type="text/javascript">
+	//This function gets called when reading a JSON file. It stores the current xml information.
+	function parseJSON(jsonFile)
+	{
+		var	xhttp = new XMLHttpRequest();
+		xhttp.open("GET", jsonFile, false);
+		xhttp.overrideMimeType("application/json");
+		xhttp.send(null);	
+		var Doc = xhttp.responseText;
+		return JSON.parse(Doc);
+	}
+	
+	// Switch between buildings
+	var gl;
+	var model, camera, projMatrix;
+	function loadModel(modelfilename)
+	{
+		model = new RenderableModel(gl,parseJSON(modelfilename));
+		camera = new Camera(gl,model.getBounds(),[0,1,0]);
+		projMatrix = camera.getProjMatrix();
+	}
+	
+	// onload: draw scene
+	function start() {
+		var canvas = null;
+		canvas = document.getElementById("scene");
+		console.log(((canvas)?"Canvas acquired":"Error: Can not acquire canvas"));
+		gl = getWebGLContext(canvas);
+		
+		// default model to first one in dropdown men
+		var modelList = document.getElementById("modelList")
+		loadModel(modelList.options[modelList.selectedIndex].value);
+	
+		// update drawing as fast as possible
+		var cameraEye;
+		function draw(){
+			gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+			
+			// get scene updates
+			viewMatrix = camera.getViewMatrix();
+			projMatrix = camera.getProjMatrix();
+			cameraEye = camera.getCameraPosition();
+			model.draw(cameraEye,projMatrix, viewMatrix);	
+			
+			window.requestAnimationFrame(draw);
+		}
+
+		gl.clearColor(1,1,1,1);
+		gl.enable(gl.DEPTH_TEST);
+		draw();
+		return 1;
+	}
+</script>
+</head>
+<body onload="start();">
+<center>
+	<select id="modelList" onchange="loadModel(this.value);">
+  		<!-- <option value='DijonPalais/models/model.json'>Dijon Palais</option> -->
+  		<option value='House/models/model.json'>House</option>
+  		<option value='House_of_parliament/models/model.json'>House of Parliament</option>
+  		<option value='Shrine/models/model.json'>Shrine</option>
+ 	</select>
+    <br />
+	<canvas id="scene" width="600px" height="400px" style="border:1px solid #FF0000;"></canvas>
+</center>
+</body>
+</html>
