@@ -10,6 +10,7 @@
 <script src="renderable.js"></script>
 <script src="camera.js"></script>
 <script src="events.js"></script>
+<script src="shaders.js"></script>
 <script type="text/javascript">
 	//This function gets called when reading a JSON file. It stores the current xml information.
 	function parseJSON(jsonFile)
@@ -24,13 +25,16 @@
 	
 	// Switch between buildings
 	var gl;
-	var model, camera, projMatrix;
+	var model, camera, lightType, cameraEye, lookAt, projMatrix;
 	function loadModel(modelfilename)
 	{
 		model = new RenderableModel(gl,parseJSON(modelfilename));
 		camera = new Camera(gl,model.getBounds(),[0,1,0]);
 		projMatrix = camera.getProjMatrix();
 	}
+	
+	// change light source
+	function loadLight(type) { lightType = type; }
 	
 	// onload: draw scene
 	function start() {
@@ -40,11 +44,13 @@
 		gl = getWebGLContext(canvas);
 		
 		// default model to first one in dropdown men
-		var modelList = document.getElementById("modelList")
+		var modelList = document.getElementById("modelList");
 		loadModel(modelList.options[modelList.selectedIndex].value);
 	
+		var lightList = document.getElementById("lightList");
+		loadLight(lightList.options[lightList.selectedIndex].value);
+		
 		// update drawing as fast as possible
-		var cameraEye;
 		function draw(){
 			gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 			
@@ -52,7 +58,8 @@
 			viewMatrix = camera.getViewMatrix();
 			projMatrix = camera.getProjMatrix();
 			cameraEye = camera.getCameraPosition();
-			model.draw(cameraEye,projMatrix, viewMatrix);	
+			lookAt = camera.getLookAtPoint();
+			model.draw(lightType,cameraEye, lookAt, projMatrix, viewMatrix);	
 			
 			window.requestAnimationFrame(draw);
 		}
@@ -71,6 +78,11 @@
   		<option value='House/models/model.json'>House</option>
   		<option value='House_of_parliament/models/model.json'>House of Parliament</option>
   		<option value='Shrine/models/model.json'>Shrine</option>
+ 	</select>
+ 	<select id="lightList" onchange="loadLight(this.value);">
+  		<!-- <option value='DijonPalais/models/model.json'>Dijon Palais</option> -->
+  		<option value='1'>Omni Light</option>
+  		<option value='0'>Spot Light</option>
  	</select>
     <br />
 	<canvas id="scene" width="600px" height="400px" style="border:1px solid #FF0000;"></canvas>
