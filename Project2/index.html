@@ -3,8 +3,6 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>Project 2</title>
-<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
-<script src="http://api.jquery.com/resources/events.js"></script>
 <script src="webgl-utils.js"></script>
 <script src="webgl-debug.js"></script>
 <script src="cuon-utils.js"></script>
@@ -34,7 +32,7 @@
 		projMatrix = camera.getProjMatrix();
 	}
 	
-	// onload: main()
+	// onload: draw scene
 	function start() {
 		var canvas = null;
 		canvas = document.getElementById("scene");
@@ -45,18 +43,16 @@
 		var modelList = document.getElementById("modelList")
 		loadModel(modelList.options[modelList.selectedIndex].value);
 	
-	
 		// update drawing as fast as possible
+		var cameraEye;
 		function draw(){
 			gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 			
-			// update scene because of user events
-			if(consumeEvent()) {
-				var viewMatrix = camera.getViewMatrix();
-				var projMatrix = camera.getProjMatrix();
-				var cameraEye = camera.getCameraPosition();
-				model.draw(cameraEye,projMatrix, viewMatrix);	
-			}
+			// get scene updates
+			viewMatrix = camera.getViewMatrix();
+			projMatrix = camera.getProjMatrix();
+			cameraEye = camera.getCameraPosition();
+			model.draw(cameraEye,projMatrix, viewMatrix);	
 			
 			window.requestAnimationFrame(draw);
 		}
