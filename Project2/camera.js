@@ -59,7 +59,7 @@ function Camera(gl,d,modelUp) // Compute a camera from model's bounding box dime
 		var m = new Matrix4().setTranslate(at[0],at[1],at[2]).rotate(-angle,U[0],U[1],U[2]).translate(-at[0],-at[1],-at[2]);
 		var e = m.multiplyVector4(new Vector4([eye[0],eye[1],eye[2],1])).elements;
 		step = Math.abs(step - e[2]);
-		if(e[2] > step || e[2] < step*-1) { // prevent crossing up vector
+		if(e[2] > step || e[2] < step*-1) { // prevent crossing up vector (flipping over)
 			eye[0]=e[0]; eye[1]=e[1]; eye[2]=e[2];
 		}
 	};
@@ -67,7 +67,7 @@ function Camera(gl,d,modelUp) // Compute a camera from model's bounding box dime
 	// ZOOM: in and out
 	this.zoom = function(direction) {
 		FOV = (direction)?FOV-1:FOV+1;	
-		// Prevent null frustrum or FOV causing model to flip vertically
+		// Prevent null frustrum & large FOV causing model to flip vertically
 		if(FOV==0) FOV++; 
 		if(FOV==180) FOV--;
 	};
