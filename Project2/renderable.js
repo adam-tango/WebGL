@@ -57,56 +57,7 @@ function RenderableModel(gl,model){
           }
         }
         
-        // Vertex shader program
-        var VSHADER_SOURCE =
-          // 'attribute vec2 textureCoord;\n' +        
-          'attribute vec3 position;\n' +
-          'attribute vec3 normal;\n' +
-          'uniform mat4 modelT, viewT, projT;\n'+
-          'uniform mat4 normalMatrix;\n' +   // Transformation matrix of the normal
-            'varying vec4 v_Color;\n' +
-      'varying vec3 v_Normal;\n' +
-      'varying vec3 v_Position;\n' +
-          // 'varying highp vec2 vTextureCoord;\n' +
-          'void main() {\n' +
-          '  gl_Position = projT*viewT*modelT*vec4(position,1.0);\n' +
-         // Calculate the vertex position in the world coordinate
-            '  v_Position = vec3(normalMatrix * vec4(position, 1.0));\n' +
-      '  v_Normal = normalize(vec3(normalMatrix * vec4(normal, 1.0)));\n' +
-          '  v_Color = vec4(0, 1.0, 0.0, 1.0);\n' +   // use instead of textures for now
-          // 'vTextureCoord = textureCoord;\n' +
-          '}\n';
-
-
-        // Fragment shader program
-        var FSHADER_SOURCE =
-            '#ifdef GL_ES\n' +
-            'precision highp float;\n' +
-      '#endif\n' +
-      
-          // 'uniform sampler2D uSampler;\n' +
-          'uniform vec3 u_LightColor;\n' +     // Light color
-      'uniform vec3 u_LightPosition;\n' +  // Position of the light source
-      'uniform vec3 u_AmbientLight;\n' +   // Ambient light color
-            'varying vec3 v_Normal;\n' +
-            'varying vec3 v_Position;\n' +
-          'varying vec4 v_Color;\n' + // use instead of texture
-          // 'varying highp vec2 vTextureCoord;\n' +
-      'void main() {\n' +  
-          // 'vec4 v_Color = vec4(texture2D(uSampler, vTextureCoord).rgb, 1.0);\n'+
-         // Normalize the normal because it is interpolated and not 1.0 in length any more
-      '  vec3 normal = normalize(v_Normal);\n' +
-         // Calculate the light direction and make its length 1.
-      '  vec3 lightDirection = normalize(u_LightPosition - v_Position);\n' +
-         // The dot product of the light direction and the orientation of a surface (the normal)
-      '  float nDotL = max(dot(lightDirection, normal), 0.0);\n' +
-         // Calculate the final color from diffuse reflection and ambient reflection
-      '  vec3 diffuse = u_LightColor * v_Color.rgb * nDotL;\n' +
-      '  vec3 ambient = u_AmbientLight * v_Color.rgb;\n' +
-      '  gl_FragColor = vec4(diffuse + ambient, v_Color.a);\n' +
-      '}\n';
-
-
+        
         // create program
         var program = createProgram(gl, VSHADER_SOURCE, FSHADER_SOURCE);
         if (!program) {
@@ -114,24 +65,22 @@ function RenderableModel(gl,model){
                 return false;
         }
 
-        var a_Position = gl.getAttribLocation(program, 'position');                  
-        var a_Normal = gl.getAttribLocation(program, 'normal'); // for lighting
-        var a_Locations = [a_Position,a_Normal];
-        // var a_TextureCoordAttribute = gl.getAttribLocation(program, "textureCoord"); // for texture
-        // var a_Locations = [a_Position,a_Normal,a_TextureCoordAttribute];
+        var aPosition = gl.getAttribLocation(program, 'aPosition');                  
+        var aNormal = gl.getAttribLocation(program, 'aNormal'); // for lighting
+        var aLocations = [aPosition,aNormal];
 
         // Get the location/address of the uniform variable inside the shader program.
         var mmLoc = gl.getUniformLocation(program,"modelT");
         var vmLoc = gl.getUniformLocation(program,"viewT");
         var pmLoc = gl.getUniformLocation(program,"projT");
         // Needed for lighting
-        var nmLoc = gl.getUniformLocation(program,"normalMatrix");
-        var u_LightColor = gl.getUniformLocation(program, 'u_LightColor');
-          var u_LightPosition = gl.getUniformLocation(program, 'u_LightPosition');
-          var u_AmbientLight = gl.getUniformLocation(program, 'u_AmbientLight');
-        // textures
-        // var texLoc = gl.getUniformLocation(program,"uSampler");
-        
+		var nmLoc = gl.getUniformLocation(program,"normalMatrix");
+        var uLightTypeLoc = gl.getUniformLocation(program,"uLightType");
+		var uLookAtLoc = gl.getUniformLocation(program,"uLookAt");
+        var uLightColorLoc = gl.getUniformLocation(program,"uLightColor");
+        var uEyePositionLoc = gl.getUniformLocation(program,"uEyePosition");
+        var uSceneAmbientLoc = gl.getUniformLocation(program,"uSceneAmbient");
+
         var drawables=[];
         var modelTransformations=[];
         var nDrawables=0;
@@ -144,7 +93,7 @@ function RenderableModel(gl,model){
                         var index = (model.nodes)?model.nodes[i].meshIndices[j]:j;
                         var mesh = model.meshes[index];
                         drawables[nDrawables] = new Drawable(
-                                a_Locations,[mesh.vertexPositions, mesh.vertexNormals, mesh.vertexTexCoordinates],
+                                aLocations,[mesh.vertexPositions, mesh.vertexNormals, mesh.vertexTexCoordinates],
                                 mesh.vertexPositions.length/3,
                                 mesh.indices, drawMode
                         );
@@ -158,21 +107,18 @@ function RenderableModel(gl,model){
                 }
         }
         // Get the location/address of the vertex attribute inside the shader program.
-        this.draw = function (cameraPosition,pMatrix,vMatrix,mMatrix)
+        this.draw = function(lightType,cameraPosition,lookAt,pMatrix,vMatrix,mMatrix)
         {
                 gl.useProgram(program);
                 gl.uniformMatrix4fv(pmLoc, false, pMatrix.elements);
                 gl.uniformMatrix4fv(vmLoc, false, vMatrix.elements);
-                // Set the light color (white)
-                  gl.uniform3f(u_LightColor, 1.0, 1.0, 1.0);
-                  // Set the light location (in the world coordinate)
-                 gl.uniform3f(u_LightPosition, cameraPosition[0], cameraPosition[1], cameraPosition[2]);
-                  // Set the ambient light
-                  gl.uniform3f(u_AmbientLight, 0.1, 0.1, 0.1);
 
-                // Texture
-                //gl.uniform1i(texLoc,0); // 0 identifies TEXTURE0 
-                
+				gl.uniform1i(uLightTypeLoc, lightType);
+                gl.uniform3f(uLightColorLoc, 1.0, 1.0, 1.0); // white
+                gl.uniform3f(uEyePositionLoc, cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+				gl.uniform3f(uLookAtLoc, lookAt[0], lookAt[1], lookAt[2]); // white
+                gl.uniform3f(uSceneAmbientLoc, 0.1, 0.1, 0.1); // scene ambience
+
                 // pass variables determined at runtime
                 for (var i= 0; i<nDrawables; i++){
                         // pass model matrix
