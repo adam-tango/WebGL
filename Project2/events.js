@@ -14,15 +14,11 @@ var MOVE_RIGHT = 39; // right arrow
 var MOVE_IN = 13; // enter
 var MOVE_OUT = 8; // backspace
 
-// flag to tell draw() the scene has been updated
-var event_queue = 0; 
+// Handle user input
+document.onkeypress=function(e) {	
 
-// MONITOR FOR KEY PRESS EVENTS
-$(document).bind('keypress', function(e) 
-{
 	var code = (e.keyCode ? e.keyCode : e.which);
-	
-	// update scence accordingly
+
 	switch(code) 
 	{	
 		case ROTATE_UP:
@@ -75,11 +71,4 @@ $(document).bind('keypress', function(e)
 	}
 
 	e.stopPropagation();
-	event_queue = 1; 
-});
-
-// Returns TRUE when an event has occured but not yet updated in draw
-function consumeEvent() {
-		event_queue--;
-		return event_queue + 1;
-}
+};
