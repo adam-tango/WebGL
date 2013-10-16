@@ -4,15 +4,18 @@ var ROTATE_DOWN = 100; // d
 var ROTATE_LEFT = 115; // s
 var ROTATE_RIGHT = 102; // f
 
-var ZOOM_IN = 61; // +/=
-var ZOOM_OUT = 45; // -/_
+var ZOOM_IN = 13//61; // +/=
+var ZOOM_OUT = 8; // -/_
 
 var MOVE_UP = 38; // up arrow
 var MOVE_DOWN = 40; // down arrow
 var MOVE_LEFT = 37; // left arrow
 var MOVE_RIGHT = 39; // right arrow
-var MOVE_IN = 13; // enter
-var MOVE_OUT = 8; // backspace
+var MOVE_IN = 61; // enter
+var MOVE_OUT = 45; // backspace
+
+var PAN_LEFT = 114; // w
+var PAN_RIGHT = 119; // r
 
 // flag to tell draw() the scene has been updated
 var event_queue = 0; 
@@ -22,6 +25,8 @@ $(document).bind('keypress', function(e)
 {
 	var code = (e.keyCode ? e.keyCode : e.which);
 	
+	console.log("code = " + code);
+
 	// update scence accordingly
 	switch(code) 
 	{	
@@ -74,8 +79,8 @@ $(document).bind('keypress', function(e)
 		break;
 	}
 
-	e.stopPropagation();
-	event_queue = 1; 
+	//e.stopPropagation();
+	//event_queue = 1; 
 });
 
 function setLight() {
