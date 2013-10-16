@@ -67,12 +67,13 @@
 			gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 			
 			// update scene because of user events
-			if(consumeEvent()) {
+			//if(consumeEvent()) 
+			//{
 				var viewMatrix = camera.getViewMatrix();
 				var projMatrix = camera.getProjMatrix();
 				var cameraEye = camera.getCameraPosition();
 				model.draw(lType,cameraEye,camera.getLookAtPoint(),projMatrix, viewMatrix);	
-			}
+			//}
 			
 			window.requestAnimationFrame(draw);
 		}
@@ -98,7 +99,7 @@
   		<option value='spot'>Spot Light</option>
  	</select>
     <br />
-	<canvas id="scene" width="600px" height="400px" style="border:1px solid #FF0000;"></canvas>
+	<canvas id="scene" width="640px" height="480px" style="border:1px solid #FF0000;"></canvas>
 </center>
 </body>
 </html>
