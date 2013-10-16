@@ -11,10 +11,10 @@ function Camera(gl,d,modelUp) // Compute a camera from model's bounding box dime
 	var far = diagonal*3;
 	var FOV = 32;
 	
-	var delta = diagonal * 0.01; // movement step length
+	var delta = diagonal * 0.05; // movement step length
 	var rotationAngle = 3; 		 // rotation step angle (degrees)
 	
-	// update matrices for draw()
+	// get updated matrices for draw()
 	this.getViewMatrix=function(e){
 		if (e==undefined) e = eye;
 		return new Matrix4().setLookAt(e[0],e[1],e[2],at[0],at[1],at[2],up[0],up[1],up[2]);
@@ -56,7 +56,7 @@ function Camera(gl,d,modelUp) // Compute a camera from model's bounding box dime
 		var m = new Matrix4().setTranslate(at[0],at[1],at[2]).rotate(-angle,U[0],U[1],U[2]).translate(-at[0],-at[1],-at[2])
 		var e = m.multiplyVector4(new Vector4([eye[0],eye[1],eye[2],1])).elements;
 		step = Math.abs(step - e[2]);
-		if(e[2] > step || e[2] < step*-1) { // prevent crossing up vector
+		if(e[2] > step || e[2] < step*-1) { // prevent crossing up vector (flipping over)
 			eye[0]=e[0]; eye[1]=e[1]; eye[2]=e[2];
 		}
 	};
@@ -64,7 +64,7 @@ function Camera(gl,d,modelUp) // Compute a camera from model's bounding box dime
 	// ZOOM: in and out
 	this.zoom = function(direction) {
 		FOV = (direction)?FOV-1:FOV+1;	
-		// Prevent null frustrum or FOV causing model to flip vertically
+		// Prevent null frustrum & large FOV causing model to flip vertically
 		if(FOV==0) FOV++; 
 		if(FOV==180) FOV--;
 	};
@@ -76,8 +76,7 @@ function Camera(gl,d,modelUp) // Compute a camera from model's bounding box dime
 		var m = new Matrix4().setTranslate(W[0]*-d, W[1]*-d, W[2]*-d);
 		var e = m.multiplyVector4(new Vector4([eye[0],eye[1],eye[2],1])).elements;
 		eye[0]=e[0]; eye[1]=e[1]; eye[2]=e[2];
-		var d = new Matrix4().setTranslate(W[0]*-d, W[1]*-d, W[2]*-d);
-		var a = d.multiplyVector4(new Vector4([at[0],at[1],at[2],1])).elements;
+		var a = m.multiplyVector4(new Vector4([at[0],at[1],at[2],1])).elements;
 		at[0]=a[0]; at[1]=a[1]; at[2]=a[2];
 	};
 	
@@ -88,8 +87,7 @@ function Camera(gl,d,modelUp) // Compute a camera from model's bounding box dime
 		var m = new Matrix4().setTranslate(V[0]*d, V[1]*d, V[2]*d);
 		var e = m.multiplyVector4(new Vector4([eye[0],eye[1],eye[2],1])).elements;
 		eye[0]=e[0]; eye[1]=e[1]; eye[2]=e[2];
-		var d = new Matrix4().setTranslate(V[0]*d, V[1]*d, V[2]*d);
-		var a = d.multiplyVector4(new Vector4([at[0],at[1],at[2],1])).elements;
+		var a = m.multiplyVector4(new Vector4([at[0],at[1],at[2],1])).elements;
 		at[0]=a[0]; at[1]=a[1]; at[2]=a[2];
 	};
 	
@@ -97,12 +95,10 @@ function Camera(gl,d,modelUp) // Compute a camera from model's bounding box dime
 	this.truck = function(direction) { 
 		var d = (direction)?delta:delta*-1;
 		var U = this.uAxis();
-		var m = new Matrix4().setTranslate(U[0]*-d, 0, 0);
+		var m = new Matrix4().setTranslate(U[0]*-d, U[1]*-d, U[2]*-d);
 		var e = m.multiplyVector4(new Vector4([eye[0],eye[1],eye[2],1])).elements;
 		eye[0]=e[0]; eye[1]=e[1]; eye[2]=e[2];
-		
-		var d = new Matrix4().setTranslate(U[0]*-d, 0, 0);
-		var a = d.multiplyVector4(new Vector4([at[0],at[1],at[2],1])).elements;
+		var a = m.multiplyVector4(new Vector4([at[0],at[1],at[2],1])).elements;
 		at[0]=a[0]; at[1]=a[1]; at[2]=a[2];
 	};
 }
