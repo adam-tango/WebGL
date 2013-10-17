@@ -30,6 +30,12 @@ var FSHADER_SOURCE =
 	'   uniform vec3 uLightColor;\n' +
 	'	uniform vec3 uSceneAmbient;\n' +
 	
+	'	uniform vec3 uEmissionColor;\n' +
+	'	uniform vec3 uDiffuseReflectance;\n' +
+	'	uniform vec3 uAmbientReflectance;\n' +
+	'	uniform vec3 uSpecularReflectance;\n' +
+	'	uniform float uShininess;\n' +
+	
     '	void main() {\n' +
 			
 	'		vec3 color = vec3(1,0,0);\n' +			// make models red - texturize in the future
@@ -37,13 +43,12 @@ var FSHADER_SOURCE =
 		
 	// EMISSIVE REFLECTANCE:
 			// materials.emissionColor = [0,0,0,1]
-	'		vec3 emission = vec3(0,0,0);\n' +
+	'		vec3 emission = uEmissionColor;\n' +
 
 	
 	// AMBIENT REFLECTANCE
 			// materials.ambientReflectance = [0,0,0,1] 
-			// chose not to multiply the two because the materials cause no ambient reflection
-	'		vec3 ambience = uSceneAmbient;\n' + // vec3 ambience = vec3(0,0,0) * uSceneAmbience;\n' +
+	'		vec3 ambience = uAmbientReflectance * uSceneAmbient;\n' + 
 
 
 	// DIFFUSE REFLECTANCE:
@@ -52,7 +57,7 @@ var FSHADER_SOURCE =
 			// The dot product of the light direction and the normal
 	'		float nDotL = max(dot(lightDirection,normal), 0.0);\n' +	
 			// calculate diffuse reflectance
-	'		vec3 diffuse = uLightColor * vec3(0.6,0.6,0.6) * nDotL;\n' +	
+	'		vec3 diffuse = uLightColor * uDiffuseReflectance * nDotL;\n' +	
 
 
 	// SPECULAR REFLECTANCE:
@@ -63,7 +68,7 @@ var FSHADER_SOURCE =
 	  		// angle between view and reflection 
 	'		float vDotR = max(dot(viewDirection, reflectDirection),0.0);\n' +	
 			// calculate specular reflectance (10.0 => material.shininess; pow() restricts angle)
-	'		vec3 specular = uLightColor * vec3(0.4,0.4,0.4) * pow(vDotR, 10.0);\n' +	
+	'		vec3 specular = uLightColor * uSpecularReflectance * pow(vDotR, uShininess);\n' +	
 			
 			// direction from camera space; since light comes from camera
 	'		vec3 spotlightDirection = vec3(0.0,0.0,-1.0);\n' +	
