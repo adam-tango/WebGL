@@ -1,5 +1,6 @@
 "use strict";
 function RenderableModel(gl,model){
+	
         function Drawable(attribLocations, vArrays, nVertices, indexArray, drawMode){
           // Create a buffer object
           var vertexBuffers=[];
@@ -57,7 +58,23 @@ function RenderableModel(gl,model){
           }
         }
         
-        
+		// Store properties for each materia
+		var materialProperties = []; // material objects
+		function addMaterial(count, emissionColor, diffuseReflectance, ambientReflectance,
+							specularReflectance, shininess)
+		{
+			//console.log('here');
+			materialProperties[count] = [];
+			materialProperties[count][0] = [emissionColor[0],emissionColor[1],emissionColor[2]];
+			materialProperties[count][1] = [diffuseReflectance[0],diffuseReflectance[1],diffuseReflectance[2]];
+			materialProperties[count][2] = [ambientReflectance[0],ambientReflectance[1],ambientReflectance[2]];
+			materialProperties[count][3] = [specularReflectance[0],specularReflectance[1],specularReflectance[2]];
+			materialProperties[count][4] = shininess;
+			
+			///console.log(materialProperties[count][0][2]);
+		}
+		
+		
         // create program
         var program = createProgram(gl, VSHADER_SOURCE, FSHADER_SOURCE);
         if (!program) {
@@ -76,16 +93,34 @@ function RenderableModel(gl,model){
         // Needed for lighting
 		var nmLoc = gl.getUniformLocation(program,"normalMatrix");
         var uLightTypeLoc = gl.getUniformLocation(program,"uLightType");
-		var uLookAtLoc = gl.getUniformLocation(program,"uLookAt");
         var uLightColorLoc = gl.getUniformLocation(program,"uLightColor");
         var uEyePositionLoc = gl.getUniformLocation(program,"uEyePosition");
         var uSceneAmbientLoc = gl.getUniformLocation(program,"uSceneAmbient");
+		// specific mesh material properties from models.json
+		var emissionColorLoc = gl.getUniformLocation(program,"uEmissionColor");
+        var diffuseReflLoc = gl.getUniformLocation(program,"uDiffuseReflectance");
+        var ambientReflLoc = gl.getUniformLocation(program,"uAmbientReflectance");
+        var specularReflLoc = gl.getUniformLocation(program,"uSpecularReflectance");
+        var shininessLoc = gl.getUniformLocation(program,"uShininess");
 
         var drawables=[];
         var modelTransformations=[];
+		var materialIndex=[]; // store material index
         var nDrawables=0;
         var nNodes = (model.nodes)? model.nodes.length:1;
+		
         var drawMode=(model.drawMode)?gl[model.drawMode]:gl.TRIANGLES;
+		
+		var nMaterials = model.materials.length;
+		for (var count=0; count<nMaterials; count++) {
+			
+			var aMaterial = model.materials[count];
+			//console.log(aMaterial.emissionColor[0]);
+			addMaterial(count, aMaterial.emissionColor, aMaterial.diffuseReflectance, 
+					aMaterial.ambientReflectance, aMaterial.specularReflectance, aMaterial.shininess);
+
+		}
+
 
         for (var i= 0; i<nNodes; i++){
                 var nMeshes = (model.nodes)?(model.nodes[i].meshIndices.length):(model.meshes.length);
@@ -97,12 +132,13 @@ function RenderableModel(gl,model){
                                 mesh.vertexPositions.length/3,
                                 mesh.indices, drawMode
                         );
+						
+						materialIndex[nDrawables] = mesh.materialIndex;
                         
                         var m = new Matrix4();
                         if (model.nodes)
                                 m.elements=new Float32Array(model.nodes[i].modelMatrix);
                         modelTransformations[nDrawables] = m;
-                        
                         nDrawables++;
                 }
         }
@@ -116,7 +152,6 @@ function RenderableModel(gl,model){
 				gl.uniform1i(uLightTypeLoc, lightType);
                 gl.uniform3f(uLightColorLoc, 1.0, 1.0, 1.0); // white
                 gl.uniform3f(uEyePositionLoc, cameraPosition[0], cameraPosition[1], cameraPosition[2]);
-				gl.uniform3f(uLookAtLoc, lookAt[0], lookAt[1], lookAt[2]); // white
                 gl.uniform3f(uSceneAmbientLoc, 0.1, 0.1, 0.1); // scene ambience
 
                 // pass variables determined at runtime
@@ -133,7 +168,18 @@ function RenderableModel(gl,model){
                         //gl.uniformMatrix4fv(mmLoc, false, 
                                 //(mMatrix)?(new Matrix4(mMatrix).multiply(modelTransformations[i])).elements
                                         //        :modelTransformations[i].elements);
-                                                
+                                  
+						// pass material properties
+						var v = materialProperties[materialIndex[i]][0];	  
+						gl.uniform3f(emissionColorLoc, v[0],v[1],v[2]);
+						v = materialProperties[materialIndex[i]][1];	
+        				gl.uniform3f(diffuseReflLoc, v[0],v[1],v[2]);
+						v = materialProperties[materialIndex[i]][2];	
+        				gl.uniform3f(ambientReflLoc, v[0],v[1],v[2]);
+						v = materialProperties[materialIndex[i]][3];	   
+						gl.uniform3f(specularReflLoc, v[0],v[1],v[2]);
+        				gl.uniform1f(shininessLoc, materialProperties[materialIndex[i]][4]);
+							              
                         drawables[i].draw();
                 }
                 gl.useProgram(null);
