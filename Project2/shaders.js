@@ -94,6 +94,7 @@ var FSHADER_SOURCE =
 	'			tColor = vec3(emission + ambience + spotDifference * (diffuse + specular));\n' +		
 	'		}\n' + 
 	
-	'    	gl_FragColor = vec4(color*tColor, 1.0);\n' +	  
+	//'    	gl_FragColor = vec4(color*tColor, 1.0);\n' +
+	'    	gl_FragColor = vec4(tColor, 1.0);\n' +	  
 	
 	'  }\n';
