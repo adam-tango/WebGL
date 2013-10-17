@@ -34,6 +34,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 	var gl;
 	var model, camera, lightType, cameraEye, lookAt, projMatrix;
 	var canvas = null;
+	var spotLightSize = 10.0;
 	function loadModel(modelfilename)
 	{
 		model = new RenderableModel(gl,parseJSON(modelfilename));
@@ -58,6 +59,12 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 			canvas.width = 600;
 		}
 		localStorage.demoMode = box.checked;
+	}
+
+	function spotLightSizeChanged(slider)
+	{
+		console.log(slider);
+		spotLightSize = slider;
 	}
 	
 	// onload: draw scene
@@ -96,12 +103,12 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 			projMatrix = camera.getProjMatrix();
 			cameraEye = camera.getCameraPosition();
 			lookAt = camera.getLookAtPoint();
-			model.draw(lightType,cameraEye, lookAt, projMatrix, viewMatrix);	
+			model.draw(lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize);	
 			
 			window.requestAnimationFrame(draw);
 		}
 
-		gl.clearColor(1,1,1,1);
+		gl.clearColor(0.2,0.2,0.2,1);
 		gl.enable(gl.DEPTH_TEST);
 		draw();
 		localStorage.demoMode = box.checked;
@@ -116,6 +123,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 	<br />
 	<canvas id="scene" width="600px" height="400px" style="border:1px solid #FF0000;"></canvas>
 	<br />
+	Spotlight Size: <input type="range" min="0.0" max="15.0" step="1.0" onchange="spotLightSizeChanged(this.value)">
 	<h3><u> Keyboard controls </u></h3>
 	<div class="inline">
 		<h4>Move:</h4>

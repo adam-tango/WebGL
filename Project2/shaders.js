@@ -35,6 +35,7 @@ var FSHADER_SOURCE =
 	'	uniform vec3 uAmbientReflectance;\n' +
 	'	uniform vec3 uSpecularReflectance;\n' +
 	'	uniform float uShininess;\n' +
+	'	uniform float uSpotlightAngle;\n' +
 	
     '	void main() {\n' +
 			
@@ -84,7 +85,8 @@ var FSHADER_SOURCE =
    				// calculate cone of spotlight
 	'			float spotDifference = 0.0;\n' +
 				// allow 10 degree spotlight angle
-	'			if(acos(sDotF) < radians(10.0)) {\n' +
+	//'			if(acos(sDotF) < radians(10.0)) {\n' +
+	'			if(acos(sDotF) < radians(uSpotlightAngle)) {\n' +
 					// 60.0 restricts angle; determines how spotlight fades out (domain: 0.0 - 120.0)
 	'				spotDifference = pow(sDotF, 60.0);\n' +	 
 	'			}\n' +

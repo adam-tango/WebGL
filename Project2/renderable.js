@@ -58,7 +58,7 @@ function RenderableModel(gl,model){
           }
         }
         
-		// Store properties for each materia
+		// Store properties for each material
 		var materialProperties = []; // material objects
 		function addMaterial(count, emissionColor, diffuseReflectance, ambientReflectance,
 							specularReflectance, shininess)
@@ -102,6 +102,7 @@ function RenderableModel(gl,model){
         var ambientReflLoc = gl.getUniformLocation(program,"uAmbientReflectance");
         var specularReflLoc = gl.getUniformLocation(program,"uSpecularReflectance");
         var shininessLoc = gl.getUniformLocation(program,"uShininess");
+        var spotAngleLoc = gl.getUniformLocation(program,"uSpotlightAngle");
 
         var drawables=[];
         var modelTransformations=[];
@@ -133,7 +134,7 @@ function RenderableModel(gl,model){
                                 mesh.indices, drawMode
                         );
 						
-						materialIndex[nDrawables] = mesh.materialIndex;
+						            materialIndex[nDrawables] = mesh.materialIndex;
                         
                         var m = new Matrix4();
                         if (model.nodes)
@@ -143,16 +144,17 @@ function RenderableModel(gl,model){
                 }
         }
         // Get the location/address of the vertex attribute inside the shader program.
-        this.draw = function(lightType,cameraPosition,lookAt,pMatrix,vMatrix,mMatrix)
+        this.draw = function(lightType,cameraPosition,lookAt,pMatrix,vMatrix,spotLightAngle)
         {
                 gl.useProgram(program);
                 gl.uniformMatrix4fv(pmLoc, false, pMatrix.elements);
                 gl.uniformMatrix4fv(vmLoc, false, vMatrix.elements);
 
-				gl.uniform1i(uLightTypeLoc, lightType);
+				        gl.uniform1i(uLightTypeLoc, lightType);
                 gl.uniform3f(uLightColorLoc, 1.0, 1.0, 1.0); // white
                 gl.uniform3f(uEyePositionLoc, cameraPosition[0], cameraPosition[1], cameraPosition[2]);
                 gl.uniform3f(uSceneAmbientLoc, 0.1, 0.1, 0.1); // scene ambience
+                gl.uniform1f(spotAngleLoc, spotLightAngle); // Custom Spotlight size from slider
 
                 // pass variables determined at runtime
                 for (var i= 0; i<nDrawables; i++){
