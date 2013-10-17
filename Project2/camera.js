@@ -99,7 +99,7 @@ function Camera(gl,d,modelUp) // Compute a camera from model's bounding box dime
 	this.truck = function(direction) { 
 		var d = (direction)?delta:delta*-1;
 		var U = this.uAxis();
-		var m = new Matrix4().setTranslate(U[0]*-d, U[1]*-d, U[3]*-d);
+		var m = new Matrix4().setTranslate(U[0]*-d, U[1]*-d, U[2]*-d);
 		var e = m.multiplyVector4(new Vector4([eye[0],eye[1],eye[2],1])).elements;
 		eye[0]=e[0]; eye[1]=e[1]; eye[2]=e[2];
 		var a = m.multiplyVector4(new Vector4([at[0],at[1],at[2],1])).elements;

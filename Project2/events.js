@@ -1,24 +1,24 @@
 // KEY CODES
-var ROTATE_UP = 101; 	// e
-var ROTATE_DOWN = 100; // d
-var ROTATE_LEFT = 115; // s
-var ROTATE_RIGHT = 102; // f
+var ROTATE_UP = 105; 	// i
+var ROTATE_DOWN = 107; // k
+var ROTATE_LEFT = 106; // j
+var ROTATE_RIGHT = 108; // l
 
 var ZOOM_IN = 61; // +/=
 var ZOOM_OUT = 45; // -/_
 
-var MOVE_UP = 38; // up arrow
-var MOVE_DOWN = 40; // down arrow
-var MOVE_LEFT = 37; // left arrow
-var MOVE_RIGHT = 39; // right arrow
-var MOVE_IN = 13; // enter
-var MOVE_OUT = 8; // backspace
+var MOVE_UP = 101; // e
+var MOVE_DOWN = 113; // q
+var MOVE_LEFT = 97; // a
+var MOVE_RIGHT = 100; // d
+var MOVE_IN = 119; // w
+var MOVE_OUT = 115; // s
 
 // Handle user input
 document.onkeypress=function(e) {	
 
 	var code = (e.keyCode ? e.keyCode : e.which);
-
+	
 	switch(code) 
 	{	
 		case ROTATE_UP:
