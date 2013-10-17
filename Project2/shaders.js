@@ -39,7 +39,7 @@ var FSHADER_SOURCE =
 	
     '	void main() {\n' +
 			
-	'		vec3 color = vec3(1,0,0);\n' +			// make models red - texturize in the future
+	'		vec3 color = vec3(0.8,0,0);\n' +			// make models red - texturize in the future
 	'		vec3 normal = normalize(vNormal);\n' +	
 		
 	// EMISSIVE REFLECTANCE:
@@ -94,7 +94,6 @@ var FSHADER_SOURCE =
 	'			tColor = vec3(emission + ambience + spotDifference * (diffuse + specular));\n' +		
 	'		}\n' + 
 	
-	//'    	gl_FragColor = vec4(color*tColor, 1.0);\n' +
-	'    	gl_FragColor = vec4(tColor, 1.0);\n' +	  
+	'    	gl_FragColor = vec4(color*tColor, 1.0);\n' +	  
 	
 	'  }\n';
