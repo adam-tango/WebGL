@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Practice Assignment #9</title>
+
+<style type="text/css">
+div.inline { float:left; width:33%; margin-right:auto; }
+.clearBoth { clear:both; }
+div.spacer { float:left; width:50%; margin-right:auto;}
+</style>
+
+<script src="webgl-utils.js"></script>
+<script src="webgl-debug.js"></script>
+<script src="cuon-utils.js"></script>
+<script src="cuon-matrix.js"></script>
+<script src="renderable.js"></script>
+<script src="camera.js"></script>
+<script src="events.js"></script>
+<script src="shaders.js"></script>
+<script type="text/javascript">
+	//This function gets called when reading a JSON file. It stores the current xml information.
+	function parseJSON(jsonFile)
+	{
+		var	xhttp = new XMLHttpRequest();
+		xhttp.open("GET", jsonFile, false);
+		xhttp.overrideMimeType("application/json");
+		xhttp.send(null);	
+		var Doc = xhttp.responseText;
+		return JSON.parse(Doc);
+	}
+	
+	// Switch between buildings
+	var gl;
+	var model, camera, lightType, cameraEye, lookAt, projMatrix, envCube, reflectingPool, reflectionMatrix;
+	var canvas = null;
+	var spotLightSize = 10.0;
+	
+	function loadModel(modelfilename)
+	{
+		console.log(parseJSON(modelfilename+"models/model.json"));
+		var json = parseJSON(modelfilename+"models/model.json");
+		model = new RenderableModel(gl, json, modelfilename);
+		camera = new Camera(gl,model.getBounds(),[0,1,0]);
+		projMatrix = camera.getProjMatrix();
+
+		var checked = document.getElementById("cameraMode").checked;
+		console.log("checked: " + checked);
+		camera.setRotate(checked);
+
+		var modelDimensions = model.getBounds();
+		reflectingPool = new RenderableModel(gl, createReflectingPool(modelDimensions, json.materials[0]));
+
+		reflectionMatrix = new Matrix4();
+		reflectionMatrix.elements = new Float32Array([1,0,0,0, 0,-1,0,0, 0,0,1,0, 0,2*modelDimensions.min[1],0,1]);
+	}
+
+	function isPowerOfTwo(x) 
+	{
+		return (x & (x - 1)) == 0;
+	}
+
+	function nextHighestPowerOfTwo(x) 
+	{
+		--x;
+		for (var i = 1; i < 32; i <<= 1) 
+		{
+			x = x | x >> i;
+		}
+		return x + 1;
+	}
+
+	function changeEnvironmentMap(basePath)
+	{
+		envCube = loadEnvironmentMap(basePath, ["posx.jpg","negx.jpg","posy.jpg","negy.jpg","posz.jpg","negz.jpg"]);
+	}
+	
+	function loadEnvironmentMap(path, fileNames)
+	{
+		var tex = gl.createTexture();
+		tex.complete = false;
+		var images = [];
+		var numFaces = 6;
+
+		for (var i=0; i<numFaces; i++)
+		{
+			var image = new Image();
+			images[i] = image;
+			image.onload = function ()
+			{
+				if (!isPowerOfTwo(image.width) || !isPowerOfTwo(image.height)) 
+				{
+					//Scaling texture to the next highest power of two...
+					var canvas = document.createElement("canvas");
+					canvas.width = nextHighestPowerOfTwo(image.width);
+					canvas.height = nextHighestPowerOfTwo(image.height);
+					var context = canvas.getContext("2d");
+					context.drawImage(image, 0, 0, canvas.width, canvas.height);
+					image = canvas;
+				}
+
+				numFaces--;
+				
+				if (numFaces == 0)
+				{
+					tex.complete = true;
+					var directions = 
+					[
+						gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+						gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+						gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+						gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+						gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+						gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
+					];
+
+					gl.bindTexture(gl.TEXTURE_CUBE_MAP, tex);
+
+					gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+					gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+					gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+					gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+					for (var j=0; j<6; j++)
+					{
+						gl.texImage2D(directions[j], 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, images[j]);
+					}
+					
+					gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+					gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+				}
+			};
+			images[i].src = path+fileNames[i];
+		}
+		return tex;
+	}
+
+	// change light source
+	function loadLight(type) { lightType = type; }
+
+	function activateDemoMode(box)
+	{
+		if (box.checked === true) 
+		{
+			console.log("box is true!");
+			canvas.width  = window.innerWidth * 0.8;
+	  		canvas.height = window.innerHeight * 0.8;
+		}
+		else
+		{
+			canvas.height = 400;
+			canvas.width = 600;
+		}
+		localStorage.demoMode = box.checked;
+	}
+
+	function changeCamera(checked)
+	{
+		console.log("change: " +checked);
+		camera.setRotate(checked);
+	}
+
+	function spotLightSizeChanged(slider)
+	{
+		console.log(slider);
+		spotLightSize = slider;
+	}
+	
+	// onload: draw scene
+	function start() 
+	{
+		//var canvas = null;
+		canvas = document.getElementById("scene");
+		console.log(((canvas)?"Canvas acquired":"Error: Can not acquire canvas"));
+		
+		var box = document.getElementById("demoMode");
+		if (localStorage.demoMode == 'true')
+		{
+			console.log("localStorage was true");
+			box.checked = true;
+		}
+		else
+		{
+			box.checked = false;
+		}
+
+		activateDemoMode(box);
+		gl = getWebGLContext(canvas, false, {stencil:true});
+		
+		envCube = loadEnvironmentMap("skybox/", ["posx.jpg","negx.jpg","posy.jpg","negy.jpg","posz.jpg","negz.jpg"]);
+
+		console.log(envCube);
+
+		// default model to first one in dropdown men
+		var modelList = document.getElementById("modelList");
+		loadModel(modelList.options[modelList.selectedIndex].value);
+		
+		var lightList = document.getElementById("lightList");
+		loadLight(lightList.options[lightList.selectedIndex].value);
+
+		// update drawing as fast as possible
+		function draw()
+		{
+			if (envCube.complete)
+			{	
+				gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT|gl.STENCIL_BUFFER_BIT);
+				
+				// get scene updates
+				viewMatrix = camera.getViewMatrix();
+				projMatrix = camera.getProjMatrix();
+				cameraEye = camera.getCameraPosition();
+				lookAt = camera.getLookAtPoint();
+				reflectedViewMatrix = new Matrix4(viewMatrix);
+				
+				// Disable Drawing to color/depth buffer
+				gl.depthMask(false);
+				gl.colorMask(false,false,false,false);
+
+				// Enable drawing to stencil buffer and draw the shape of the reflecting pool to the stencil buffer 
+				gl.enable(gl.STENCIL_TEST);
+				gl.stencilOp(gl.REPLACE, gl.REPLACE, gl.REPLACE);
+				gl.stencilFunc(gl.ALWAYS, 1, 0xffffffff);
+				reflectingPool.draw(lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube);
+
+				//enable writing to the color/depth buffers
+				gl.depthMask(true);
+				gl.colorMask(true,true,true,true);
+
+				// Set Stencil Test On
+				gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
+				gl.stencilFunc(gl.EQUAL, 1, 0xffffffff);
+
+				// Draw virtual reflected object
+				reflectedViewMatrix.multiply(reflectionMatrix);
+				model.draw(lightType,cameraEye, lookAt, projMatrix, reflectedViewMatrix, spotLightSize, envCube);
+
+
+				// Enable blending, and set blend function
+				gl.enable(gl.BLEND);
+				gl.disable(gl.DEPTH_TEST);
+				//gl.blendFunc(gl.ONE, gl.SRC_ALPHA);
+				gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+				reflectingPool.draw(lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube, 0.5);
+
+				//disable blend/stencil test
+				gl.disable(gl.BLEND);
+				gl.disable(gl.STENCIL_TEST);
+				gl.enable(gl.DEPTH_TEST);
+
+				// Draw model
+				model.draw(lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube);	
+			}
+			window.requestAnimationFrame(draw);
+		}
+
+		gl.clearColor(0.0,0.0,0.0,1);
+		gl.clearStencil(0);
+		gl.enable(gl.DEPTH_TEST);
+		gl.depthFunc(gl.LEQUAL);
+		
+		draw();
+		localStorage.demoMode = box.checked;
+		return 1;
+	}
+</script>
+</head>
+<body onload="start();">
+<center>
+	<h1> CAP4720 Practice Assignment #9 </h1>
+	Demo Mode: <input id="demoMode" type="checkbox" onchange="activateDemoMode(this)">
+	<br />
+	Rotate Around At instead of Eye (helpful for seeing environment mapping!): <input id="cameraMode" type="checkbox" onchange="changeCamera(this.checked)">
+	<br />
+	<canvas id="scene" width="600px" height="400px" style="border:1px solid #FF0000;"></canvas>
+	<br />
+	Spotlight Size: <input type="range" min="0.0" max="20.0" step="1.0" onchange="spotLightSizeChanged(this.value)">
+	<h3><u> Keyboard controls </u></h3>
+	<div class="inline">
+		<h4>Move:</h4>
+		<p>Move Forward: W</p><p>Move Backward: S</p><p>Move Left: A</p><p>Move Right: D</p><p>Move Up: E</p><p>Move Down: Q</p> 
+	</div>
+	<div class="inline">
+		<h4>Zoom:</h4>
+		<p>Zoom In: +</p><p>Zoom Out: -</p> 
+	</div>
+	<div class="inline">
+		<h4>Rotate:</h4>
+		<p>Rotate Up: I</p><p>Rotate Down: K</p><p>Rotate Left: J</p><p>Rotate Right: L</p>
+	</div>
+	<br class="clearBoth" />
+	<select id="modelList" onchange="loadModel(this.value);">
+		<option value='Teapot/'>Teapot</option>
+		<!--<option value='Skull/'>Skull</option>-->
+		<option value='House/'>House</option>
+ 	</select>
+ 	<select id="lightList" onchange="loadLight(this.value);">
+  		<!-- <option value='DijonPalais/models/model.json'>Dijon Palais</option> -->
+  		<option value='1'>Omni Light</option>
+  		<option value='0'>Spot Light</option>
+ 	</select>
+ 	<select onchange="changeEnvironmentMap(this.value);">
+  		<!-- <option value='DijonPalais/models/model.json'>Dijon Palais</option> -->
+  		<option value='skybox/'>Clouds</option>
+  		<option value='Colosseum_Skybox/'>Colusseum</option>
+ 	</select>
+</center>
+</body>
+</html>
