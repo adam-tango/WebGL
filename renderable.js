@@ -196,10 +196,9 @@ function RenderableModel(gl,model, path)
     }
 
     // Get the location/address of the vertex attribute inside the shader program.
-    this.draw = function(lightType,cameraPosition,lookAt,pMatrix,vMatrix,spotLightAngle, cubeMap, alpha)
+    this.draw = function(sunSpot,lightType,cameraPosition,lookAt,pMatrix,vMatrix,spotLightAngle, cubeMap, alpha)
     {
         gl.useProgram(program);
-        //drawEnvironment(cubeMap);
         
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
@@ -210,9 +209,9 @@ function RenderableModel(gl,model, path)
 
         gl.uniform1i(uLightTypeLoc, lightType);
         gl.uniform3f(uLightColorLoc, 1.0, 1.0, 1.0); // white
-        gl.uniform3f(uEyePositionLoc, cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+        gl.uniform3f(uEyePositionLoc, sunSpot[0], sunSpot[1], sunSpot[2]);
         gl.uniform3f(EyePositionLoc, cameraPosition[0], cameraPosition[1], cameraPosition[2]);
-        gl.uniform3f(uSceneAmbientLoc, 0.25, 0.25, 0.25); // scene ambience
+        gl.uniform3f(uSceneAmbientLoc, 0.02, 0.02, 0.02); // scene ambience
         gl.uniform1f(spotAngleLoc, spotLightAngle); // Custom Spotlight size from slider
         if (alpha)
         {
@@ -230,17 +229,14 @@ function RenderableModel(gl,model, path)
             var mMatrix=modelTransformations[i];
             gl.uniformMatrix4fv(mmLoc, false, mMatrix.elements);
             // pass inverse transpose model matrix
-            var inverseTransposeMMatrix = new Matrix4(mMatrix);
-            inverseTransposeMMatrix = inverseTransposeMMatrix.invert();
-            inverseTransposeMMatrix = inverseTransposeMMatrix.transpose();
-            gl.uniformMatrix4fv(inverseTransposeMMatrixLocation, false, inverseTransposeMMatrix.elements);
+            gl.uniformMatrix4fv(inverseTransposeMMatrixLocation, false, modelMatrixToNormalMatrix(mMatrix).elements);
 
             var normalMatrix = new Matrix4();  // Model matrix
             // Calculate the matrix to transform the normal based on the model matrix
               normalMatrix.setInverseOf(mMatrix);
               normalMatrix.transpose();
             // Pass the transformation matrix for normals to u_NormalMatrix
-              gl.uniformMatrix4fv(nmLoc, false, normalMatrix.elements);
+              gl.uniformMatrix4fv(nmLoc, false, modelMatrixToNormalMatrix(mMatrix).elements);
             if (hasMaterials)
             {
   						// pass material properties
@@ -330,7 +326,7 @@ function RenderableModel(gl,model, path)
         img.onload = function()
         {
           var nPOT = false; // nPOT: notPowerOfTwo
-          console.log(imageFileName+" loaded : "+img.width+"x"+img.height);
+         // console.log(imageFileName+" loaded : "+img.width+"x"+img.height);
           tex.complete = img.complete;
           gl.activeTexture(gl.TEXTURE0);
           gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -351,6 +347,65 @@ function RenderableModel(gl,model, path)
         img.src = path+imageFileName.substring(3,imageFileName.length);
         return tex;
     }
+	
+	
+	
+	
+	function modelMatrixToNormalMatrix(mat)
+	{ 
+		var a00 = mat.elements[0], a01 = mat.elements[1], a02 = mat.elements[2],
+			a10 = mat.elements[4], a11 = mat.elements[5], a12 = mat.elements[6],
+			a20 = mat.elements[8], a21 = mat.elements[9], a22 = mat.elements[10],
+			b01 = a22 * a11 - a12 * a21,
+			b11 = -a22 * a10 + a12 * a20,
+			b21 = a21 * a10 - a11 * a20,
+			d = a00 * b01 + a01 * b11 + a02 * b21,
+			id;
+
+		if (!d) { return null; }
+		id = 1 / d;
+
+		var dest = new Matrix4();
+
+		dest.elements[0] = b01 * id;
+		dest.elements[4] = (-a22 * a01 + a02 * a21) * id;
+		dest.elements[8] = (a12 * a01 - a02 * a11) * id;
+		dest.elements[1] = b11 * id;
+		dest.elements[5] = (a22 * a00 - a02 * a20) * id;
+		dest.elements[9] = (-a12 * a00 + a02 * a10) * id;
+		dest.elements[2] = b21 * id;
+		dest.elements[6] = (-a21 * a00 + a01 * a20) * id;
+		dest.elements[10] = (a11 * a00 - a01 * a10) * id;
+
+		return dest;
+	}
+	
+	this.modelMatrix = function() 
+	{
+		
+		console.log(modelMatrix);	
+		
+	}
+	this.scaleModel = function(percentage) {
+	
+		for (var i= 0; i<nDrawables; i++)
+        {
+			modelTransformations[i] = modelTransformations[i].scale(percentage,percentage,percentage);
+			//modelNormals[i] = modelMatrixToNormalMatrix(modelTransformations[i]);
+		}
+		
+	}
+	this.translateModel=function(x, y, z)
+	{
+		for (var i= 0; i<nDrawables; i++)
+        {
+			modelTransformations[i] = modelTransformations[i].translate(x,y,z);
+			//modelNormals[i] = modelMatrixToNormalMatrix(modelTransformations[i]);
+
+			//console.log(moveObj[0] + " - " + moveObj[1] + " - " +moveObj[2]);
+			//mMatrix.translate(moveObj[0], moveObj[1], moveObj[2]);
+		}
+	}
 }
 
 function createReflectingPool(dimensions, materials)
@@ -389,3 +444,5 @@ function createReflectingPool(dimensions, materials)
 
   return thePool;
 }
+
+
