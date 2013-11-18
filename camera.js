@@ -12,7 +12,7 @@ function Camera(gl,d,modelUp) // Compute a camera from model's bounding box dime
 	var far = diagonal*3;
 	var FOV = 32;
 	
-	var delta = diagonal * 0.01; // movement step length
+	var delta = diagonal * 0.1; // movement step length
 	var rotationAngle = 3; 		 // rotation step angle (degrees)
 	
 	// update matrices for draw()
