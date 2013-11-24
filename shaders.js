@@ -40,6 +40,7 @@ var FSHADER_SOURCE =
 	'uniform vec3 uEyePosition;\n' +
 
 	'uniform int uLightType;\n' +
+	'uniform int uHasTexture;\n' +
 	//'uniform vec3 uEyePosition;\n' +
 	'uniform vec3 uLightColor;\n' +
 	'uniform vec3 uSceneAmbient;\n' +
@@ -108,7 +109,12 @@ var FSHADER_SOURCE =
 	//'	vec3 reflectedViewDirection = reflect(viewDirection, normal);\n' +
 	'	vec3 reflectedViewDirection = reflect(viewDir, SummataNormal);\n' +
 	'	vec3 environmentColor = textureCube(texUnit, reflectedViewDirection).rgb;\n' +
-	//'	gl_FragColor = vec4(textColor.rgb*tColor, 1.0);\n' +	  
-	'	gl_FragColor = vec4(environmentColor*tColor, uAlpha);\n' +
+	'	if(uHasTexture == 1) {\n' +
+	'		gl_FragColor = vec4(textColor.rgb*tColor, 1.0);\n' +
+	'	}\n' + 
+	'	else\n' + 
+	'	{	\n' +	  
+	'		gl_FragColor = vec4(environmentColor*tColor, uAlpha);\n' +
+	'	}\n' +
 	//'	gl_FragColor = vec4(tColor, 1.0);\n' +
 	' }\n';

@@ -118,6 +118,7 @@ function RenderableModel(gl,model, path)
     var uEyePositionLoc = gl.getUniformLocation(program,"uEyePosition");
     var EyePositionLoc = gl.getUniformLocation(program, "EyePosition");
     var uSceneAmbientLoc = gl.getUniformLocation(program,"uSceneAmbient");
+    var uHasTextureLoc = gl.getUniformLocation(program, "uHasTexture");
     // specific mesh material properties from models.json
     var emissionColorLoc = gl.getUniformLocation(program,"uEmissionColor");
     var diffuseReflLoc = gl.getUniformLocation(program,"uDiffuseReflectance");
@@ -255,6 +256,7 @@ function RenderableModel(gl,model, path)
               if(v)
               {
                 //console.log("haz v!");
+                gl.uniform1i(uHasTextureLoc, 1);
                 gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, v);
                 gl.uniform1i(sampLoc,0);
@@ -262,6 +264,7 @@ function RenderableModel(gl,model, path)
               else
               {
                 //console.log("Model doesn't have a texture!");
+                gl.uniform1i(uHasTextureLoc, 0);
               }
             }
 
@@ -380,31 +383,43 @@ function RenderableModel(gl,model, path)
 		return dest;
 	}
 	
-	this.modelMatrix = function() 
+	this.getModelTransformations = function() 
 	{
 		
-		console.log(modelMatrix);	
-		
+		var clone = [];
+
+    for (var i=0; i<modelTransformations.length; i++)
+    {
+      clone[i] = new Matrix4(modelTransformations[i]);
+    }	
+		return clone;
 	}
+
+  this.setModelTransformations = function(transformationsArray)
+  {
+    modelTransformations = transformationsArray;
+  }
+
 	this.scaleModel = function(percentage) {
 	
 		for (var i= 0; i<nDrawables; i++)
-        {
+    {
 			modelTransformations[i] = modelTransformations[i].scale(percentage,percentage,percentage);
 			//modelNormals[i] = modelMatrixToNormalMatrix(modelTransformations[i]);
 		}
-		
+		return modelTransformations;
 	}
 	this.translateModel=function(x, y, z)
 	{
 		for (var i= 0; i<nDrawables; i++)
-        {
+    {
 			modelTransformations[i] = modelTransformations[i].translate(x,y,z);
 			//modelNormals[i] = modelMatrixToNormalMatrix(modelTransformations[i]);
 
 			//console.log(moveObj[0] + " - " + moveObj[1] + " - " +moveObj[2]);
 			//mMatrix.translate(moveObj[0], moveObj[1], moveObj[2]);
 		}
+    return modelTransformations;
 	}
 }
 

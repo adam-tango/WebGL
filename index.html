@@ -18,7 +18,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 <script src="shaders.js"></script>
 <script type="text/javascript">
 
-	var township, shrine;
+	var township, shrine, houseOriginal, house;
 	var reflectingPool, envCube;
 	var reflectionShrineMatrix, reflectionMatrix;
 	var houseRowCount = 5; // 5
@@ -31,27 +31,34 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 		township = [];
 		// Load houses from model file and put them into a row
 		var json = parseJSON("House/models/model.json");
-		for(var i=0; i < houseColCount; i++) {
+		house = new RenderableModel(gl, json, "House/");
+		houseOriginal = new RenderableModel(gl, json, "House/");
+
+		for(var i=0; i < houseColCount; i++)
+		{
 			township[i] = [];
-			for(var j=0; j < houseRowCount; j++) {
-				if((i>0 && i<4) && (j>0 && j<4)) {
+			for(var j=0; j < houseRowCount; j++) 
+			{
+				if((i>0 && i<4) && (j>0 && j<4)) 
+				{
 					township[i][j] = 1;	
 				}
-				else {
-					township[i][j] = new RenderableModel(gl, json, "House/");
-					township[i][j].translateModel(-5+i*40,j*-50+25,0);
+				else 
+				{
+					house.translateModel(-5+i*40,j*-50+25,0);
+					township[i][j] = house.getModelTransformations();
 				}
 			}
 		}
 		
-		
 		// Load shrine & scale/translate to center
-		var jsonShrine = parseJSON("Shrine/models/model.json");
-		shrine = new RenderableModel(gl, jsonShrine, "Shrine/");
+		var jsonShrine = parseJSON("stBasil/models/model.json");
+		shrine = new RenderableModel(gl, jsonShrine, "stBasil/");
 		// Note: although the model is scaled, moving it is not; multiply translation by inverse of scale factor
-		shrine.scaleModel(.14);
-		factor = 100/15.0;
-		shrine.translateModel(67*factor,190*factor,0);
+		shrine.scaleModel(.75);
+		factor = 100/75.0;
+		//factor = 1;
+		shrine.translateModel(20*factor,80*factor,0);
 		
 		
 		// Set up camera with hard-coded scene size
@@ -70,7 +77,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 		reflectingPool = new RenderableModel(gl, createReflectingPool(d, json.materials[0]));
 		// house reflection matrix (works for all houses)
 		reflectionMatrix = new Matrix4();
-		modelDimensions = township[0][0].getBounds();
+		modelDimensions = houseOriginal.getBounds();
 		reflectionMatrix.elements = new Float32Array([1,0,0,0, 0,-1,0,0, 0,0,1,0, 0,2*modelDimensions.min[1],0,1]);
 		// shrine reflection matrix
 		reflectionShrineMatrix = new Matrix4();
@@ -144,11 +151,14 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 				// Draw virtual reflected object
 				reflectedViewMatrix = new Matrix4(viewMatrix);
 				reflectedViewMatrix.multiply(reflectionMatrix);
-				for(i = 0; i < houseColCount; i++) {
-					for(j=0; j < houseRowCount; j++) {
-						if(township[i][j] != 1) {
-							township[i][j].draw(sunSpot,lightType,cameraEye, lookAt, 
-									projMatrix, reflectedViewMatrix, spotLightSize, envCube);
+				for(i = 0; i < houseColCount; i++) 
+				{
+					for(j=0; j < houseRowCount; j++) 
+					{
+						if(township[i][j] != 1) 
+						{
+							houseOriginal.setModelTransformations(township[i][j]);
+							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, reflectedViewMatrix, spotLightSize, envCube);
 						}
 					}
 				}
@@ -173,10 +183,14 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 				gl.enable(gl.DEPTH_TEST);
 
 				// Draw model
-				for(i = 0; i < houseColCount; i++) {
-					for(j=0; j < houseRowCount; j++) {
-						if(township[i][j] != 1) {
-							township[i][j].draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube);
+				for(i = 0; i < houseColCount; i++) 
+				{
+					for(j=0; j < houseRowCount; j++) 
+					{
+						if(township[i][j] != 1) 
+						{
+							houseOriginal.setModelTransformations(township[i][j]);
+							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube);
 						}
 					}
 				}
