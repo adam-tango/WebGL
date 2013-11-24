@@ -238,40 +238,42 @@ function RenderableModel(gl,model, path)
               normalMatrix.transpose();
             // Pass the transformation matrix for normals to u_NormalMatrix
               gl.uniformMatrix4fv(nmLoc, false, modelMatrixToNormalMatrix(mMatrix).elements);
-            if (hasMaterials)
+            
+			if (hasMaterials)
             {
-  						// pass material properties
-  						var v = materialProperties[materialIndex[i]][0];	  
-  						gl.uniform3f(emissionColorLoc, v[0],v[1],v[2]);
-  						v = materialProperties[materialIndex[i]][1];	
+				// pass material properties
+  				var v = materialProperties[materialIndex[i]][0];	  
+  				gl.uniform3f(emissionColorLoc, v[0],v[1],v[2]);
+  				v = materialProperties[materialIndex[i]][1];	
           		gl.uniform3f(diffuseReflLoc, v[0],v[1],v[2]);
-  						v = materialProperties[materialIndex[i]][2];	
+  				v = materialProperties[materialIndex[i]][2];	
           		gl.uniform3f(ambientReflLoc, v[0],v[1],v[2]);
-  						v = materialProperties[materialIndex[i]][3];	   
-  						gl.uniform3f(specularReflLoc, v[0],v[1],v[2]);
-    				  gl.uniform1f(shininessLoc, materialProperties[materialIndex[i]][4]);
+  				v = materialProperties[materialIndex[i]][3];	   
+  				gl.uniform3f(specularReflLoc, v[0],v[1],v[2]);
+    			gl.uniform1f(shininessLoc, materialProperties[materialIndex[i]][4]);
 
-              v = materialProperties[materialIndex[i]][5];
-              //console.log(v);
-              if(v)
-              {
-                //console.log("haz v!");
-                gl.uniform1i(uHasTextureLoc, 1);
-                gl.activeTexture(gl.TEXTURE0);
-                gl.bindTexture(gl.TEXTURE_2D, v);
-                gl.uniform1i(sampLoc,0);
-              }
-              else
-              {
-                //console.log("Model doesn't have a texture!");
-                gl.uniform1i(uHasTextureLoc, 0);
-              }
+                v = materialProperties[materialIndex[i]][5];
+              
+                if(v)
+                {
+                	//console.log("haz v!");
+           		    gl.uniform1i(uHasTextureLoc, 1);
+                	gl.activeTexture(gl.TEXTURE0);
+                	gl.bindTexture(gl.TEXTURE_2D, v);
+                	gl.uniform1i(sampLoc,0);
+                }
+                else
+                {
+                	//console.log("Model doesn't have a texture!");
+                	gl.uniform1i(uHasTextureLoc, 0);
+              	}
             }
 
             drawables[i].draw();
         }
         gl.useProgram(null);
     }
+	
     this.getBounds=function() // Computes Model bounding box
     {                
         var xmin, xmax, ymin, ymax, zmin, zmax;
@@ -290,10 +292,7 @@ function RenderableModel(gl,model, path)
                 for(var i=0;i<mesh.vertexPositions.length; i+=3)
                 {
                     var vertex = m.multiplyVector4(new Vector4([mesh.vertexPositions[i],mesh.vertexPositions[i+1],mesh.vertexPositions[i+2],1])).elements;
-                    //if (i==0){
-                    //        console.log([mesh.vertexPositions[i],mesh.vertexPositions[i+1],mesh.vertexPositions[i+2]]);
-                    //        console.log([vertex[0], vertex[1], vertex[2]]);
-                    //}
+
                     if (firstvertex)
                     {
                         xmin = xmax = vertex[0];
@@ -351,10 +350,64 @@ function RenderableModel(gl,model, path)
         return tex;
     }
 	
+		
 	
 	
+	this.getModelTransformations = function() 
+	{
+		var clone = [];
+
+    	for (var i=0; i<modelTransformations.length; i++)
+    	{
+      		clone[i] = new Matrix4(modelTransformations[i]);
+    	}	
+		return clone;
+	}
+
+  	this.setModelTransformations = function(transformationsArray)
+  	{
+  		modelTransformations = transformationsArray;
+  	}
+
+	this.scaleModel = function(percentage) {
 	
-	function modelMatrixToNormalMatrix(mat)
+		for (var i= 0; i<nDrawables; i++)
+   	 	{
+			modelTransformations[i] = modelTransformations[i].scale(percentage,percentage,percentage);
+			// normal matrix calculated at draw time
+			//modelNormals[i] = modelMatrixToNormalMatrix(modelTransformations[i]);
+		}
+		
+		return modelTransformations;
+	}
+	
+	this.rotateModel=function(x, y, z)
+	{
+		for (var i= 0; i<nDrawables; i++)
+    	{
+			modelTransformations[i] = modelTransformations[i].rotate(x,y,z);
+		}
+    	return modelTransformations;
+	}
+	
+	this.translateModel=function(x, y, z)
+	{
+		for (var i= 0; i<nDrawables; i++)
+    	{
+			modelTransformations[i] = modelTransformations[i].translate(x,y,z);
+			//modelNormals[i] = modelMatrixToNormalMatrix(modelTransformations[i]);
+
+			//console.log(moveObj[0] + " - " + moveObj[1] + " - " +moveObj[2]);
+			//mMatrix.translate(moveObj[0], moveObj[1], moveObj[2]);
+		}
+    	return modelTransformations;
+	}
+}
+
+
+
+
+function modelMatrixToNormalMatrix(mat)
 	{ 
 		var a00 = mat.elements[0], a01 = mat.elements[1], a02 = mat.elements[2],
 			a10 = mat.elements[4], a11 = mat.elements[5], a12 = mat.elements[6],
@@ -382,46 +435,7 @@ function RenderableModel(gl,model, path)
 
 		return dest;
 	}
-	
-	this.getModelTransformations = function() 
-	{
-		
-		var clone = [];
 
-    for (var i=0; i<modelTransformations.length; i++)
-    {
-      clone[i] = new Matrix4(modelTransformations[i]);
-    }	
-		return clone;
-	}
-
-  this.setModelTransformations = function(transformationsArray)
-  {
-    modelTransformations = transformationsArray;
-  }
-
-	this.scaleModel = function(percentage) {
-	
-		for (var i= 0; i<nDrawables; i++)
-    {
-			modelTransformations[i] = modelTransformations[i].scale(percentage,percentage,percentage);
-			//modelNormals[i] = modelMatrixToNormalMatrix(modelTransformations[i]);
-		}
-		return modelTransformations;
-	}
-	this.translateModel=function(x, y, z)
-	{
-		for (var i= 0; i<nDrawables; i++)
-    {
-			modelTransformations[i] = modelTransformations[i].translate(x,y,z);
-			//modelNormals[i] = modelMatrixToNormalMatrix(modelTransformations[i]);
-
-			//console.log(moveObj[0] + " - " + moveObj[1] + " - " +moveObj[2]);
-			//mMatrix.translate(moveObj[0], moveObj[1], moveObj[2]);
-		}
-    return modelTransformations;
-	}
-}
 
 function createReflectingPool(dimensions, materials)
 {
@@ -455,7 +469,7 @@ function createReflectingPool(dimensions, materials)
   //thePool.materials=[];
   //thePool.materials[0]=materials;
 
-  console.log(thePool);
+  //console.log(thePool);
 
   return thePool;
 }
