@@ -21,11 +21,11 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 	var township, shrine, houseOriginal, house;
 	var reflectingPool, envCube;
 	var reflectionShrineMatrix, reflectionMatrix;
-	var houseRowCount = 5; // 5
-	var houseColCount = 5; // 5
+	var houseRowCount = 6; // 5
+	var houseColCount = 7; // 5
 	
 	var camera, lightType, cameraEye, lookAt, projMatrix;
-	
+		
 	function loadModel()
 	{
 		township = [];
@@ -34,34 +34,33 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 		house = new RenderableModel(gl, json, "House/");
 		houseOriginal = new RenderableModel(gl, json, "House/");
 
-		for(var i=0; i < houseColCount; i++)
-		{
+		for(var i=0; i < houseRowCount; i++) {
 			township[i] = [];
-			for(var j=0; j < houseRowCount; j++) 
+			for(var j=0; j < houseColCount; j++) 
 			{
-				if((i>0 && i<4) && (j>0 && j<4)) 
-				{
+				house.translateModel(x(i,j),z(i,j),0); // translate original house no matter what
+				if((i>0 && i<4) && (j>1 && j<5)) {
 					township[i][j] = 1;	
 				}
-				else 
-				{
-					house.translateModel(-5+i*40,j*-50+25,0);
+				else {
+					//console.log(i+","+j+" : ["+x(i,j)+","+z(i,j)+"]");
 					township[i][j] = house.getModelTransformations();
 				}
 			}
 		}
 		
+		
 		// Load shrine & scale/translate to center
 		var jsonShrine = parseJSON("stBasil/models/model.json");
 		shrine = new RenderableModel(gl, jsonShrine, "stBasil/");
 		// Note: although the model is scaled, moving it is not; multiply translation by inverse of scale factor
-		shrine.scaleModel(.75);
+		//shrine.scaleModel(.8);
 		factor = 100/75.0;
-		//factor = 1;
-		shrine.translateModel(20*factor,80*factor,0);
+		shrine.rotateModel(75,0,0);
+		shrine.translateModel(-25,-95,0);
+			
 		
-		
-		// Set up camera with hard-coded scene size
+		// Set up camera with hardcoded scene size
 		var d = [];
 		d.min = [0,0,0];
 		d.max = [150,40,150]; // set scene size for camera
@@ -151,9 +150,9 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 				// Draw virtual reflected object
 				reflectedViewMatrix = new Matrix4(viewMatrix);
 				reflectedViewMatrix.multiply(reflectionMatrix);
-				for(i = 0; i < houseColCount; i++) 
+				for(i = 0; i < houseRowCount; i++) 
 				{
-					for(j=0; j < houseRowCount; j++) 
+					for(j=0; j < houseColCount; j++) 
 					{
 						if(township[i][j] != 1) 
 						{
@@ -162,6 +161,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 						}
 					}
 				}
+
 				// Draw shrine virtual reflected object
 				reflectedShrineViewMatrix = new Matrix4(viewMatrix);
 				reflectedShrineViewMatrix.multiply(reflectionShrineMatrix);
@@ -183,9 +183,9 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 				gl.enable(gl.DEPTH_TEST);
 
 				// Draw model
-				for(i = 0; i < houseColCount; i++) 
+				for(i = 0; i < houseRowCount; i++) 
 				{
-					for(j=0; j < houseRowCount; j++) 
+					for(j=0; j < houseColCount; j++) 
 					{
 						if(township[i][j] != 1) 
 						{
@@ -211,13 +211,29 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 	}
 	
 
+	// functions to move sun and place houses on grid
 	var sun = [-1000,50,50];
 	function getSunPos(step) {
 		xstep = 2400.0/15 * step;
 		return [sun[0] + xstep, sun[1], sun[2]];
 	}
-	
-	
+	var houseColGap = 37;
+	var houseColStart = -31;
+	function x(j,i) {
+		// reset start position, new row
+		if(i==0){
+			// new row, if 2nd row or greater must reset movement from last row
+		 	return (j>0)?(houseColCount-1)*(-houseColGap):houseColStart;
+		}
+		return houseColGap;	// not first in row, keep moving right
+	}
+	var houseRowGap = -40;
+	var houseRowStart = 23;
+	function z(j,i) {
+		// first row or greater?
+		if(i==0) { return (j>0)?houseRowGap:houseRowStart; }
+		return 0; // same row, no need to increment
+	}
 </script>
 </head>
 <body onload="start();">
