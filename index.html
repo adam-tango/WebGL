@@ -138,7 +138,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 				gl.enable(gl.STENCIL_TEST);
 				gl.stencilOp(gl.REPLACE, gl.REPLACE, gl.REPLACE);
 				gl.stencilFunc(gl.ALWAYS, 1, 0xffffffff);
-				reflectingPool.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube);
+				reflectingPool.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube, 1.0, false);
 
 				//enable writing to the color/depth buffers
 				gl.depthMask(true);
@@ -158,10 +158,10 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 						if(township[i][j] != 1) 
 						{
 							houseOriginal.setModelTransformations(township[i][j]);
-							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, reflectedViewMatrix, spotLightSize, envCube);
+							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, reflectedViewMatrix, spotLightSize, envCube, 1.0, true);
 							var projectedShadowViewMatrix = new Matrix4(viewMatrix);
 							projectedShadowViewMatrix.multiply(computeShadowProjectionMatrix([0,0,0,1],[0,1,0,0],[sunSpot[0],sunSpot[1],sunSpot[2],1.0]));
-							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, projectedShadowViewMatrix, spotLightSize, envCube);
+							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, projectedShadowViewMatrix, spotLightSize, envCube, 1.0, true);
 						}
 					}
 				}
@@ -179,7 +179,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 				//gl.blendFunc(gl.ONE, gl.SRC_ALPHA);
 				gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 				reflectingPool.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, 
-										viewMatrix, spotLightSize, envCube, 0.5);
+										viewMatrix, spotLightSize, envCube, 0.5, false);
 
 				// Shadows
 				gl.depthFunc(gl.ALWAYS);
@@ -194,9 +194,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 							var sunLoc = getSunPos();
 							var shadowProjMatrix = new Matrix4(viewMatrix);
 							shadowProjMatrix.multiply(computeShadowProjectionMatrix(Q, [0, 1, 0, 0], [sunLoc[0], sunLoc[1], sunLoc[2], 1]));
-							//var shadowProjMatrix = computeShadowProjectionMatrix(Q, [0, 1, 0, 0], [sunLoc[0], sunLoc[1], sunLoc[2], 1]);
-							//shadowProjMatrix.multiply(viewMatrix);
-							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, viewMatrix, shadowProjMatrix, spotLightSize, envCube);
+							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, viewMatrix, shadowProjMatrix, spotLightSize, envCube, -1.0, true);
 						}						
 					}
 				}
@@ -215,12 +213,12 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 						if(township[i][j] != 1) 
 						{	
 							houseOriginal.setModelTransformations(township[i][j]);
-							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube);
+							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube, 1.0, false);
 						}
 					}
 				}
 				// draw shrine
-				shrine.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube);
+				shrine.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube, 1.0, false);
 			}
 			window.requestAnimationFrame(draw);
 		}

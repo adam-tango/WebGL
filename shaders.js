@@ -110,7 +110,10 @@ var FSHADER_SOURCE =
 	'	vec3 reflectedViewDirection = reflect(viewDir, SummataNormal);\n' +
 	'	vec3 environmentColor = textureCube(texUnit, reflectedViewDirection).rgb;\n' +
 	'	if(uHasTexture == 1) {\n' +
-	'		gl_FragColor = vec4(textColor.rgb*tColor, 1.0);\n' +
+	'		gl_FragColor = vec4(textColor.rgb*tColor, uAlpha);\n' +
+	'	}\n' +
+	'	else if(uHasTexture == 0 && uAlpha < 0.0) {\n' +
+	'		gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n' +
 	'	}\n' + 
 	'	else\n' + 
 	'	{	\n' +	  

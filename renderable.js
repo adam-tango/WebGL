@@ -197,8 +197,9 @@ function RenderableModel(gl,model, path)
     }
 
     // Get the location/address of the vertex attribute inside the shader program.
-    this.draw = function(sunSpot,lightType,cameraPosition,lookAt,pMatrix,vMatrix,spotLightAngle, cubeMap, alpha)
+    this.draw = function(sunSpot,lightType,cameraPosition,lookAt,pMatrix,vMatrix,spotLightAngle, cubeMap, alpha, isShadow)
     {
+        //console.log(isShadow);
         gl.useProgram(program);
         
         gl.activeTexture(gl.TEXTURE1);
@@ -239,34 +240,39 @@ function RenderableModel(gl,model, path)
             // Pass the transformation matrix for normals to u_NormalMatrix
               gl.uniformMatrix4fv(nmLoc, false, modelMatrixToNormalMatrix(mMatrix).elements);
             
-			if (hasMaterials)
+            if (hasMaterials)
             {
-				// pass material properties
-  				var v = materialProperties[materialIndex[i]][0];	  
-  				gl.uniform3f(emissionColorLoc, v[0],v[1],v[2]);
-  				v = materialProperties[materialIndex[i]][1];	
-          		gl.uniform3f(diffuseReflLoc, v[0],v[1],v[2]);
-  				v = materialProperties[materialIndex[i]][2];	
-          		gl.uniform3f(ambientReflLoc, v[0],v[1],v[2]);
-  				v = materialProperties[materialIndex[i]][3];	   
-  				gl.uniform3f(specularReflLoc, v[0],v[1],v[2]);
-    			gl.uniform1f(shininessLoc, materialProperties[materialIndex[i]][4]);
+              // pass material properties
+              var v = materialProperties[materialIndex[i]][0];	  
+              gl.uniform3f(emissionColorLoc, v[0],v[1],v[2]);
+              v = materialProperties[materialIndex[i]][1];	
+              gl.uniform3f(diffuseReflLoc, v[0],v[1],v[2]);
+              v = materialProperties[materialIndex[i]][2];	
+              gl.uniform3f(ambientReflLoc, v[0],v[1],v[2]);
+              v = materialProperties[materialIndex[i]][3];	   
+              gl.uniform3f(specularReflLoc, v[0],v[1],v[2]);
+              gl.uniform1f(shininessLoc, materialProperties[materialIndex[i]][4]);
 
-                v = materialProperties[materialIndex[i]][5];
-              
-                if(v)
-                {
-                	//console.log("haz v!");
-           		    gl.uniform1i(uHasTextureLoc, 1);
-                	gl.activeTexture(gl.TEXTURE0);
-                	gl.bindTexture(gl.TEXTURE_2D, v);
-                	gl.uniform1i(sampLoc,0);
-                }
-                else
-                {
-                	//console.log("Model doesn't have a texture!");
-                	gl.uniform1i(uHasTextureLoc, 0);
-              	}
+              v = materialProperties[materialIndex[i]][5];
+
+              if(v && !isShadow)
+              {
+              	//console.log("haz v!");
+                gl.uniform1i(uHasTextureLoc, 1);
+              	gl.activeTexture(gl.TEXTURE0);
+              	gl.bindTexture(gl.TEXTURE_2D, v);
+              	gl.uniform1i(sampLoc,0);
+              }
+              else if(isShadow == true)
+              {
+                //console.log("isShadow");
+                gl.uniform1i(uHasTextureLoc, 0);
+              }
+              else
+              {
+              	//console.log("Model doesn't have a texture!");
+              	gl.uniform1i(uHasTextureLoc, 0);
+              }
             }
 
             drawables[i].draw();
