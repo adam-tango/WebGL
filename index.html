@@ -177,6 +177,27 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 				reflectingPool.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, 
 										viewMatrix, spotLightSize, envCube, 0.5);
 
+				// Shadows
+				gl.depthFunc(gl.ALWAYS);
+				for(i = 0; i < houseRowCount; i++) 
+				{
+					for(j=0; j < houseColCount; j++) 
+					{
+						if (township[i][j] != 1)
+						{
+							houseOriginal.setModelTransformations(township[i][j]);
+							var Q = [0, houseOriginal.getBounds().min[1],0,1];
+							var sunLoc = getSunPos();
+							var shadowProjMatrix = new Matrix4(viewMatrix);
+							shadowProjMatrix.multiply(computeShadowProjectionMatrix(Q, [0, 1, 0, 0], [sunLoc[0], sunLoc[1], sunLoc[2], 1]));
+							//var shadowProjMatrix = computeShadowProjectionMatrix(Q, [0, 1, 0, 0], [sunLoc[0], sunLoc[1], sunLoc[2], 1]);
+							//shadowProjMatrix.multiply(viewMatrix);
+							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, viewMatrix, shadowProjMatrix, spotLightSize, envCube);
+						}						
+					}
+				}
+				gl.depthFunc(gl.LESS);
+
 				//disable blend/stencil test
 				gl.disable(gl.BLEND);
 				gl.disable(gl.STENCIL_TEST);
@@ -188,7 +209,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 					for(j=0; j < houseColCount; j++) 
 					{
 						if(township[i][j] != 1) 
-						{
+						{	
 							houseOriginal.setModelTransformations(township[i][j]);
 							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, viewMatrix, spotLightSize, envCube);
 						}
