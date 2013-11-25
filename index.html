@@ -17,7 +17,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 <script src="events.js"></script>
 <script src="shaders.js"></script>
 <script type="text/javascript">
-
+	var Q,L;
 	var township, shrine, houseOriginal, house;
 	var reflectingPool, envCube;
 	var reflectionShrineMatrix, reflectionMatrix;
@@ -82,7 +82,8 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 		reflectionShrineMatrix = new Matrix4();
 		modelDimensions = shrine.getBounds();
 		reflectionShrineMatrix.elements = new Float32Array([1,0,0,0, 0,-1,0,0, 0,0,1,0, 0,2*modelDimensions.min[1],0,1]);
-
+		Q= [0,0,0,1];
+        N= [0,1,0,0];
 	}
 	
 	// onload: draw scene
@@ -158,6 +159,9 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 						{
 							houseOriginal.setModelTransformations(township[i][j]);
 							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, reflectedViewMatrix, spotLightSize, envCube);
+							var projectedShadowViewMatrix = new Matrix4(viewMatrix);
+							projectedShadowViewMatrix.multiply(computeShadowProjectionMatrix([0,0,0,1],[0,1,0,0],[sunSpot[0],sunSpot[1],sunSpot[2],1.0]));
+							houseOriginal.draw(sunSpot,lightType,cameraEye, lookAt, projMatrix, projectedShadowViewMatrix, spotLightSize, envCube);
 						}
 					}
 				}
@@ -233,7 +237,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 	
 
 	// functions to move sun and place houses on grid
-	var sun = [-1000,50,50];
+	var sun = [-1000,300,50];
 	function getSunPos(step) {
 		xstep = 2400.0/15 * step;
 		return [sun[0] + xstep, sun[1], sun[2]];
@@ -435,7 +439,27 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 		//console.log(slider);
 		spotLightSize = slider;
 	}
-	
+
+
+
+
+// Q : point on mirror plane
+// N : normal to the mirror plane
+// L : location of the light source
+function computeShadowProjectionMatrix(Q,N,L){
+	var NdotQ = N[0]*Q[0]+N[1]*Q[1]+N[2]*Q[2];
+	var NdotL = N[0]*L[0]+N[1]*L[1]+N[2]*L[2];
+	var D = NdotL-((L[3]>0)?NdotQ:0);
+	var shadowMatrix = new Matrix4();
+	shadowMatrix.elements = [
+		D-N[0]*L[0],-N[0]*L[1],-N[0]*L[2], -N[0]*L[3],
+		-N[1]*L[0], D-N[1]*L[1],-N[1]*L[2], -N[1]*L[3],
+		-N[2]*L[0],-N[2]*L[1], D-N[2]*L[2], -N[2]*L[3],
+		NdotQ*L[0], NdotQ*L[1], NdotQ*L[2], NdotL
+	];
+	if (shadowMatrix.elements[15] < 0) for(var i=0; i<16;i++) shadowMatrix.elements[i] = -shadowMatrix.elements[i];
+	return shadowMatrix;
+}	
 </script>
 
 </body>
