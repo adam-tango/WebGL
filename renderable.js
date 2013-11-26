@@ -197,7 +197,7 @@ function RenderableModel(gl,model, path)
     }
 
     // Get the location/address of the vertex attribute inside the shader program.
-    this.draw = function(sunSpot,lightType,cameraPosition,lookAt,pMatrix,vMatrix,spotLightAngle, cubeMap, alpha, isShadow)
+    this.draw = function(sunSpot,lightType,cameraPosition,lookAt,pMatrix,vMatrix,spotLightAngle, cubeMap, alpha, isShadow, normalmap)
     {
         //console.log(isShadow);
         gl.useProgram(program);
@@ -224,11 +224,40 @@ function RenderableModel(gl,model, path)
           gl.uniform1f(alphaLoc, 1.0);  
         }
 
+		if(normalmap) {
+			//normalmap
+			gl.uniform4f(gl.getUniformLocation(program,"uLightAmbient"), 0.25, 0.25, 0.25, 0.25); // scene ambience (was .25)
+			gl.uniform4f(gl.getUniformLocation(program,"uLightDiffuse"), 1.0, 1.0, 1.0, 1.0); // scene ambience
+			//normal
+			gl.activeTexture(gl.TEXTURE2);
+    		gl.bindTexture(gl.TEXTURE_2D, normalmap.tex);
+    		gl.uniform1i(gl.getUniformLocation(program,"uNormalSampler"), 2);
+			//model matrix
+			gl.uniform3f(gl.getUniformLocation(program,"uLightPosition"), sunSpot[0], sunSpot[1], sunSpot[2]);
+			gl.uniformMatrix4fv(gl.getUniformLocation(program,"uPMatrix"), false, pMatrix.elements);
+			gl.uniformMatrix4fv(gl.getUniformLocation(program,"uVMatrix"), false, vMatrix.elements);
+			//
+			gl.uniform4f(gl.getUniformLocation(program,"uMaterialDiffuse"), 0.6,0.6,0.6,1.0); // material ambience
+			gl.uniform4f(gl.getUniformLocation(program,"uMaterialAmbient"), 0.1,0.1,0.1,1.0); // material ambience
+			//
+			gl.uniform1i(gl.getUniformLocation(program,"uNormalMap"), 1);
+			gl.uniform1i(gl.getUniformLocation(program,"uNormalMap2"), 1); 
+			//
+		} else {gl.uniform1i(gl.getUniformLocation(program,"uNormalMap"), 0); 
+				gl.uniform1i(gl.getUniformLocation(program,"uNormalMap2"), 0); }
+		
         // pass variables determined at runtime
         for (var i= 0; i<nDrawables; i++)
         {
             // pass model matrix
             var mMatrix=modelTransformations[i];
+			
+			//normalmap
+			//gl.uniformMatrix4fv(gl.getUniformLocation(program,"uMMatrix"), false, mMatrix.elements);
+            //gl.uniformMatrix4fv(gl.getUniformLocation(program,"uNMatrix"), false, modelMatrixToNormalMatrix(mMatrix).elements);
+			//
+			
+			
             gl.uniformMatrix4fv(mmLoc, false, mMatrix.elements);
             // pass inverse transpose model matrix
             gl.uniformMatrix4fv(inverseTransposeMMatrixLocation, false, modelMatrixToNormalMatrix(mMatrix).elements);
@@ -334,7 +363,7 @@ function RenderableModel(gl,model, path)
         img.onload = function()
         {
           var nPOT = false; // nPOT: notPowerOfTwo
-         // console.log(imageFileName+" loaded : "+img.width+"x"+img.height);
+          //console.log(imageFileName+" loaded : "+img.width+"x"+img.height);
           tex.complete = img.complete;
           gl.activeTexture(gl.TEXTURE0);
           gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -352,7 +381,10 @@ function RenderableModel(gl,model, path)
           tex.height = img.height;
           imagecount--; 
         };
-        img.src = path+imageFileName.substring(3,imageFileName.length);
+        if(!path) { img.src = imageFileName; }
+		else {
+			img.src = path+imageFileName.substring(3,imageFileName.length);
+		}
         return tex;
     }
 	
@@ -464,7 +496,23 @@ function createReflectingPool(dimensions, materials)
   thePool.meshes = [];
   thePool.meshes[0]={};
   thePool.meshes[0].vertexPositions = [-1,0,-1, -1,0,1, 1,0,1, 1,0,-1];
-  thePool.meshes[0].vertexNormals = [0,1,0,0,1,0,0,1,0,0,1,0];
+  /*thePool.meshes[0].vertexPositions = [-1.0, 1.0,
+                                                                                                         1.0, 1.0,
+                                                                                                         1.0, -1.0,
+                                                                                                        -1.0, 1.0,
+                                                                                                         1.0, -1.0,
+                                                                                                        -1.0, -1.0];*/
+  thePool.meshes[0].vertexNormals = [-1,0,-1, -1,0,1, 1,0,1, 1,0,-1]; // 
+  thePool.meshes[0].vertexTexCoordinates = [[-1,-1, 1, -1, 1, 1, -1, 1]]
+  /*thePool.meshes[0].vertexTexCoordinates = [[1.0, 1.0,
+  0.0, 1.0,
+  0.0, 0.0, 
+  1.0, 0.0]];*/
+ /* thePool.meshes[0].vertexTexCoordinates = [[0.0, 1.0,1.0, 1.0,
+                                                                                                        1.0, 0.0,
+                                                                                                        0.0, 1.0,
+                                                                                                        1.0, 0.0,
+                                                                                                        0.0, 0.0]];*/
   thePool.meshes[0].indices = [0,1,2,2,3,0];
   thePool.meshes[0].materialIndex = 0;
 
@@ -472,6 +520,22 @@ function createReflectingPool(dimensions, materials)
   thePool.nodes[0] = {};
   thePool.nodes[0].modelMatrix = modelMatrix;
   thePool.nodes[0].meshIndices = [0];
+  
+  thePool.materials = [];
+  thePool.materials[0] = {};
+  thePool.materials[0].emissionColor = [0.0,0.0,0.0,  0.0,0.0,0.0,  0.0,0.0,0.0, 0.0,0.0,0.0, 0.0,0.0,0.0];
+  thePool.materials[0].diffuseReflectance = [0.6,0.6,0.6,  0.6,0.6,0.6,  0.6,0.6,0.6, 0.6,0.6,0.6, 0.6,0.6,0.6,];
+  thePool.materials[0].ambientReflectance = [0.4,0.4,0.4,  0.4,0.4,0.4,  0.4,0.4,0.4, 0.4,0.4,0.4, 0.4,0.4,0.4,];
+  thePool.materials[0].specularReflectance = [0.0,0.0,0.0,  0.0,0.0,0.0,  0.0,0.0,0.0, 0.0,0.0,0.0, 0.0,0.0,0.0];
+  thePool.materials[0].shinines = 25.0;
+  /*thePool.materials[0].vertexTexCoordinates = [0.0, 1.0,1.0, 1.0,
+                                                                                                        1.0, 0.0,
+                                                                                                        0.0, 1.0,
+                                                                                                        1.0, 0.0,
+                                                                                                        0.0, 0.0];*/
+  thePool.materials[0].diffuseTexture = ['./bumpmap/waternormal.jpg'];
+  
+  
   //thePool.materials=[];
   //thePool.materials[0]=materials;
 
