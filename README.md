@@ -18,4 +18,4 @@ Hi folks. Some ground rules:
 	
 	– 'git branch' will tell you what branch you're working on.
 
-7. Github is not a file dumping ground! Remember to pull before you start working so you don't overwrite someone else's changes! 
+To run the demo, start a local HTTP server (for example `npx http-server`) and browse to http://localhost:8080.
