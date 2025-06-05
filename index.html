@@ -340,58 +340,61 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 		var images = [];
 		var numFaces = 6;
 
-		for (var i=0; i<numFaces; i++)
-		{
-			var image = new Image();
-			images[i] = image;
-			image.onload = function ()
-			{
-				if (!isPowerOfTwo(image.width) || !isPowerOfTwo(image.height)) 
-				{
-					//Scaling texture to the next highest power of two...
-					var canvas = document.createElement("canvas");
-					canvas.width = nextHighestPowerOfTwo(image.width);
-					canvas.height = nextHighestPowerOfTwo(image.height);
-					var context = canvas.getContext("2d");
-					context.drawImage(image, 0, 0, canvas.width, canvas.height);
-					image = canvas;
-				}
+                for (var i=0; i<numFaces; i++)
+                {
+                        (function(index){
+                                var image = new Image();
+                                images[index] = image;
+                                image.onload = function ()
+                                {
+                                        if (!isPowerOfTwo(image.width) || !isPowerOfTwo(image.height))
+                                        {
+                                                //Scaling texture to the next highest power of two...
+                                                var canvas = document.createElement("canvas");
+                                                canvas.width = nextHighestPowerOfTwo(image.width);
+                                                canvas.height = nextHighestPowerOfTwo(image.height);
+                                                var context = canvas.getContext("2d");
+                                                context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                                                image = canvas;
+                                        }
 
-				numFaces--;
-				
-				if (numFaces == 0)
-				{
-					tex.complete = true;
-					var directions = 
-					[
-						gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-						gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-						gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-						gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-						gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-						gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
-					];
+                                        images[index] = image;
+                                        numFaces--;
 
-					gl.bindTexture(gl.TEXTURE_CUBE_MAP, tex);
+                                        if (numFaces == 0)
+                                        {
+                                                tex.complete = true;
+                                                var directions =
+                                                [
+                                                        gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+                                                        gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+                                                        gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+                                                        gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+                                                        gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+                                                        gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
+                                                ];
 
-					gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-					gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-					gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-					gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                                                gl.bindTexture(gl.TEXTURE_CUBE_MAP, tex);
 
-					for (var j=0; j<6; j++)
-					{
-						gl.texImage2D(directions[j], 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, images[j]);
-					}
-					
-					gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-					gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
-				}
-			};
-			images[i].src = path+fileNames[i];
-		}
-		return tex;
-	}
+                                                gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+                                                gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                                                gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                                                gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+                                                for (var j=0; j<6; j++)
+                                                {
+                                                        gl.texImage2D(directions[j], 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, images[j]);
+                                                }
+
+                                                gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+                                                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+                                        }
+                                };
+                                image.src = path+fileNames[index];
+                        })(i);
+                }
+                return tex;
+        }
 	
 	
 	
