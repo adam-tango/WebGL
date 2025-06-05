@@ -527,7 +527,7 @@ function createReflectingPool(dimensions, materials)
   thePool.materials[0].diffuseReflectance = [0.6,0.6,0.6,  0.6,0.6,0.6,  0.6,0.6,0.6, 0.6,0.6,0.6, 0.6,0.6,0.6,];
   thePool.materials[0].ambientReflectance = [0.4,0.4,0.4,  0.4,0.4,0.4,  0.4,0.4,0.4, 0.4,0.4,0.4, 0.4,0.4,0.4,];
   thePool.materials[0].specularReflectance = [0.0,0.0,0.0,  0.0,0.0,0.0,  0.0,0.0,0.0, 0.0,0.0,0.0, 0.0,0.0,0.0];
-  thePool.materials[0].shinines = 25.0;
+  thePool.materials[0].shininess = 25.0;
   /*thePool.materials[0].vertexTexCoordinates = [0.0, 1.0,1.0, 1.0,
                                                                                                         1.0, 0.0,
                                                                                                         0.0, 1.0,
