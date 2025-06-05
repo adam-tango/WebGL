@@ -28,13 +28,13 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 	
 	var camera, lightType, cameraEye, lookAt, projMatrix;
 		
-	function loadModel()
-	{
-		township = [];
-		// Load houses from model file and put them into a row
-		var json = parseJSON("House/models/model.json");
-		house = new RenderableModel(gl, json, "House/");
-		houseOriginal = new RenderableModel(gl, json, "House/");
+        async function loadModel()
+        {
+                township = [];
+                // Load houses from model file and put them into a row
+                var json = await fetch("House/models/model.json").then(r => r.json());
+                house = new RenderableModel(gl, json, "House/");
+                houseOriginal = new RenderableModel(gl, json, "House/");
 
 		for(var i=0; i < houseRowCount; i++) {
 			township[i] = [];
@@ -52,9 +52,9 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 		}
 		
 		
-		// Load shrine & scale/translate to center
-		var jsonShrine = parseJSON("Shrine/models/model.json");
-		shrine = new RenderableModel(gl, jsonShrine, "Shrine/");
+                // Load shrine & scale/translate to center
+                var jsonShrine = await fetch("Shrine/models/model.json").then(r => r.json());
+                shrine = new RenderableModel(gl, jsonShrine, "Shrine/");
 		// Note: although the model is scaled, moving it is not; multiply translation by inverse of scale factor
 		shrine.scaleModel(.1);
 		factor = 100.0/12.0;
@@ -87,8 +87,8 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 	}
 	
 	// onload: draw scene
-	function start() 
-	{
+        async function start()
+        {
 		// aquire canvas
 		canvas = document.getElementById("scene");
 		console.log(((canvas)?"Canvas acquired":"Error: Can not acquire canvas"));
@@ -115,8 +115,8 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 		//normalmap = new Texture('./bumpmap/r.jpg');
 		stucco = new Texture('./bumpmap/stucco.jpg');
 		
-		loadModel();
-		loadLight(1); // use omni light source
+                await loadModel();
+                loadLight(1); // use omni light source
 		
 		
 		var startSeconds = new Date().getTime() / 1000;
@@ -258,7 +258,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 	<br />
 	Rotate Around At instead of Eye (helpful for seeing environment mapping!): <input id="cameraMode" type="checkbox" onchange="changeCamera(this.checked)">
 	<br />
-	<canvas id="scene" width="600px" height="400px" style="border:1px solid #FF0000;"></canvas>
+        <canvas id="scene" width="600" height="400" style="border:1px solid #FF0000;"></canvas>
 	<br />
 	Spotlight Size: <input type="range" min="0.0" max="20.0" step="1.0" onchange="spotLightSizeChanged(this.value)">
 	<h3><u> Keyboard controls </u></h3>
@@ -297,20 +297,7 @@ div.spacer { float:left; width:50%; margin-right:auto;}
 	// global vars
 	var canvas = null;
 	var gl;
-	var spotLightSize = 10.0;
-
-	
-	//This function gets called when reading a JSON file. It stores the current xml information.
-	function parseJSON(jsonFile)
-	{
-		var	xhttp = new XMLHttpRequest();
-		xhttp.open("GET", jsonFile, false);
-		xhttp.overrideMimeType("application/json");
-		xhttp.send(null);	
-		var Doc = xhttp.responseText;
-		return JSON.parse(Doc);
-	}
-	
+	var spotLightSize = 10.0;	
 	
 	
 	/* 
